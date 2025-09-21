@@ -2,14 +2,18 @@
   "name": "vue-myvue",
   "version": "1.0.0",
   "description": "",
+  "type": "module",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "node scripts/dev.js --format esm"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
     "typescript": "^5.9.2"
+  },
+  "dependencies": {
+    "@types/node": "^24.5.2"
   }
 }
