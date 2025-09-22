@@ -29,8 +29,6 @@ export default [
   },
   // TypeScript 推荐（无类型感知，运行更快；需要类型感知见下方“可选增强”）
   ...tseslint.configs.recommended,
-  // 类型感知
-  ...tseslint.configs.recommendedTypeChecked,
 
   // 关闭与 Prettier 冲突的风格类规则
   eslintConfigPrettier,
