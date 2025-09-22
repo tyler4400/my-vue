@@ -1,0 +1,29 @@
+# deps
+node_modules/
+
+# builds
+docs/
+dist/
+build/
+coverage/
+.temp/
+.cache/
+.next/
+.nuxt/
+.vitepress/
+
+# monorepo packages outputs
+packages/*/dist/
+packages/*/build/
+
+# lockfiles
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+
+# misc
+*.min.js
+*.map
+
+# ide
+.idea
