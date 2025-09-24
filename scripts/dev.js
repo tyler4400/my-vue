@@ -58,7 +58,7 @@ console.log('确定最终要打的包: ', target)
 const entry = resolve(__dirname, `../packages/${target}/src/index.ts`)
 console.log('入口文件地址: ', entry)
 
-const outfile = resolve(__dirname, `../packages/${target}/dist/${format}.js`)
+const outfile = resolve(__dirname, `../packages/${target}/dist/${target}.${format}.js`)
 console.log('构建输出地址', outfile)
 
 const pkg = require(`../packages/${target}/package.json`)

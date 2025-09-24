@@ -1,0 +1,61 @@
+#-------------------------------------------------------------------------------#
+#               Qodana analysis is configured by qodana.yaml file               #
+#             https://www.jetbrains.com/help/qodana/qodana-yaml.html
+
+
+#  简述
+#  Qodana 是 JetBrains 的代码质量/静态分析平台，相当于把 IntelliJ/IDEA 的“代码检查器”搬到本地或 CI/CD 里跑，扫描项目的代码问题、样式一致性、安全隐患、死代码等，并可设置“质量门禁”让流水线在不达标时失败。
+#  qodana.yaml 是它的配置文件，用来声明要启用的检查集合、包含/排除、预执行脚本、质量门禁阈值、以及所用的分析镜像等。
+#  qodana.yaml 里都配置什么
+#version: 配置文件版本。
+#profile.name: 使用的检查规则集（例如官方预设 qodana.starter）。
+#include/exclude: 精确启用/禁用某些检查，或限定扫描路径。
+#bootstrap: 扫描前执行的脚本（安装依赖、构建等）。
+#plugins: 预装 IDE 插件以扩展检查范围。
+#failureConditions: 质量门禁（阈值/覆盖率），不达标时让 CI 失败。
+#linter: 选择哪种 Qodana 镜像（语言/生态），决定可用检查器集。
+
+#
+#-------------------------------------------------------------------------------#
+
+#################################################################################
+#              WARNING: Do not store sensitive information in this file,        #
+#               as its contents will be included in the Qodana report.          #
+#################################################################################
+version: "1.0"
+
+#Specify inspection profile for code analysis
+profile:
+  name: qodana.starter
+
+#Enable inspections
+#include:
+#  - name: <SomeEnabledInspectionId>
+
+#Disable inspections
+#exclude:
+#  - name: <SomeDisabledInspectionId>
+#    paths:
+#      - <path/where/not/run/inspection>
+
+#Execute shell command before Qodana execution (Applied in CI/CD pipeline)
+#bootstrap: sh ./prepare-qodana.sh
+
+#Install IDE plugins before Qodana execution (Applied in CI/CD pipeline)
+#plugins:
+#  - id: <plugin.id> #(plugin id can be found at https://plugins.jetbrains.com)
+
+# Quality gate. Will fail the CI/CD pipeline if any condition is not met
+# severityThresholds - configures maximum thresholds for different problem severities
+# testCoverageThresholds - configures minimum code coverage on a whole project and newly added code
+# Code Coverage is available in Ultimate and Ultimate Plus plans
+#failureConditions:
+#  severityThresholds:
+#    any: 15
+#    critical: 5
+#  testCoverageThresholds:
+#    fresh: 70
+#    total: 50
+
+#Specify Qodana linter for analysis (Applied in CI/CD pipeline)
+linter: jetbrains/qodana-js:2025.2
