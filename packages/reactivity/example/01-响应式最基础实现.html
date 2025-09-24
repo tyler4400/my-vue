@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>01-响应式最基础实现</title>
+</head>
+<body>
+<span id="count"></span>
+  <button id="count-btn">count+1</button>
+  <script type="module">
+    import { ref, effect } from '../dist/reactivity.esm.js'
+
+    const count = ref(0)
+
+    effect(() => {
+      // console.log('01- count: ', count.value);
+      document.getElementById('count').innerText = count.value
+    })
+
+    document.getElementById('count-btn').addEventListener('click', () => {
+      count.value = count.value + 1
+    })
+
+
+  </script>
+</body>
+</html>
