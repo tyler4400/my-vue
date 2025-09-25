@@ -5,7 +5,8 @@
   <title>01-响应式最基础实现</title>
 </head>
 <body>
-<span id="count"></span>
+  <p>依赖1：<span id="count"></span></p>
+  <p>依赖2：<span id="count2"></span></p>
   <button id="count-btn">count+1</button>
   <script type="module">
     import { ref, effect } from '../dist/reactivity.esm.js'
@@ -13,12 +14,19 @@
     const count = ref(0)
 
     effect(() => {
-      // console.log('01- count: ', count.value);
-      document.getElementById('count').innerText = count.value
+      const val  = count.value
+      console.log('1 - count: ', val);
+      document.getElementById('count').innerText = val
+    })
+
+    effect(() => {
+      const val  = count.value
+      console.log('2 - count: ', val);
+      document.getElementById('count2').innerText = val
     })
 
     document.getElementById('count-btn').addEventListener('click', () => {
-      count.value = count.value + 1
+      count.value = parseInt(document.getElementById('count').innerText) + 1
     })
 
 

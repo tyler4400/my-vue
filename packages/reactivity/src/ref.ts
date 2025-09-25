@@ -1,18 +1,26 @@
 import { activeSub } from './effect'
+import { link, Link } from './system'
 
 enum ReactiveFlags {
   IS_REF = '__v_isRef',
 }
 
-class RefImpl {
+export class RefImpl {
   // ref 标记，证明是一个 ref
   public readonly [ReactiveFlags.IS_REF] = true
 
   // 保存实际的值
   _value
 
-  // 保存和 effect 之间的关联关系
-  subs
+  /**
+   * 双向链表的头链表， 收集依赖
+   */
+  headSubscription: Link
+
+  /**
+   * 双向链表的tail链表， 收集依赖
+   */
+  tailSubscription: Link
 
   constructor(value) {
     this._value = value
@@ -21,9 +29,9 @@ class RefImpl {
   get value() {
     // 收集依赖
     if (activeSub) {
-      console.log('我在effect中被读取了， 将整个函数收集起来')
+      console.log('我在effect中被读取了， 将整个函数收集起来.')
       // 如果 activeSub 有，那就保存起来，等我更新的时候，触发
-      this.subs = activeSub
+      link(this, activeSub)
     } else {
       console.log('不在effect中， 不会收集依赖')
     }
@@ -35,7 +43,15 @@ class RefImpl {
     this._value = newVal
 
     // 通知effect重新执行
-    this.subs?.()
+    const queueEffect: Function[] = []
+    let pointer = this.headSubscription
+    while (pointer) {
+      queueEffect.push(pointer.sub)
+      pointer = pointer.nextSub
+    }
+    for (const effect of queueEffect) {
+      effect()
+    }
   }
 }
 
