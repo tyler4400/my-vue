@@ -41,6 +41,7 @@ export default [
       'prettier/prettier': 'error',
       // 可按需在此细化 TS 噪音级别，例如：
       '@typescript-eslint/no-unsafe-function-type': 'off',
+      '@typescript-eslint/no-this-alias': 'off',
       // '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }]
     }
   }

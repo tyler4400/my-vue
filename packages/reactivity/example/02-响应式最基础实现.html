@@ -9,11 +9,11 @@
   <p>依赖2：<span id="count2"></span></p>
   <button id="count-btn">count+1</button>
   <script type="module">
-    import { ref, effect } from '../dist/reactivity.esm.js'
-    // import {
-    //   ref,
-    //   effect,
-    // } from '../../../node_modules/vue/dist/vue.esm-browser.prod.js'
+    // import { ref, effect } from '../dist/reactivity.esm.js'
+    import {
+      ref,
+      effect,
+    } from '../../../node_modules/vue/dist/vue.esm-browser.prod.js'
     const count = ref(0)
 
     effect(() => {
@@ -26,7 +26,13 @@
       const val  = count.value
       console.log('2 - count: ', val);
       document.getElementById('count2').innerText = val
-    })
+    },
+    {
+      scheduler() {
+        console.log('触发了调度器, 上面effect不会重新执行')
+      },
+    },)
+
 
     document.getElementById('count-btn').addEventListener('click', () => {
       count.value = parseInt(document.getElementById('count').innerText) + 1

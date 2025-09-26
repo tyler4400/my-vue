@@ -1,5 +1,5 @@
 import { activeSub } from './effect'
-import { link, Link } from './system'
+import { linkEffectToSubscription, Link, propagate } from './system'
 
 enum ReactiveFlags {
   IS_REF = '__v_isRef',
@@ -28,30 +28,28 @@ export class RefImpl {
 
   get value() {
     // 收集依赖
-    if (activeSub) {
-      console.log('我在effect中被读取了， 将整个函数收集起来.')
-      // 如果 activeSub 有，那就保存起来，等我更新的时候，触发
-      link(this, activeSub)
-    } else {
-      console.log('不在effect中， 不会收集依赖')
-    }
+    trackRef(this)
     return this._value
   }
 
   set value(newVal) {
-    console.log('我被设置新值了， 通知依赖重新执行')
     this._value = newVal
 
     // 通知effect重新执行
-    const queueEffect: Function[] = []
-    let pointer = this.headSubscription
-    while (pointer) {
-      queueEffect.push(pointer.sub)
-      pointer = pointer.nextSub
-    }
-    for (const effect of queueEffect) {
-      effect()
-    }
+    triggerRef(this)
+  }
+}
+
+export function trackRef(dep: RefImpl) {
+  if (activeSub) {
+    // 如果 activeSub 有，那就保存起来，等我更新的时候，触发
+    linkEffectToSubscription(dep, activeSub)
+  }
+}
+
+export function triggerRef(dep: RefImpl) {
+  if (dep.headSubscription) {
+    propagate(dep.headSubscription)
   }
 }
 

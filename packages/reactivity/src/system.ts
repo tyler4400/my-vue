@@ -1,7 +1,8 @@
 import { RefImpl } from './ref'
+import { ReactiveEffect } from './effect'
 
 export interface Link {
-  sub: Function
+  sub: ReactiveEffect
   nextSub: Link | undefined
   prevSub: Link | undefined
 }
@@ -11,7 +12,7 @@ export interface Link {
  * @param dep
  * @param sub
  */
-export function link(dep: RefImpl, sub: Function) {
+export function linkEffectToSubscription(dep: RefImpl, sub: ReactiveEffect) {
   const newLink: Link = {
     sub,
     nextSub: undefined,
@@ -31,6 +32,19 @@ export function link(dep: RefImpl, sub: Function) {
     dep.tailSubscription = newLink
     dep.headSubscription = newLink
   }
+}
 
-  console.log('link', dep.headSubscription)
+/**
+ * 传播更新的函数
+ */
+export function propagate(subscription: Link) {
+  let link = subscription
+  const queueEffect: ReactiveEffect[] = []
+  while (link) {
+    queueEffect.push(link.sub)
+    link = link.nextSub
+  }
+  for (const effect of queueEffect) {
+    effect.notify()
+  }
 }

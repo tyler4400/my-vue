@@ -243,7 +243,7 @@ pnpm -r build            # 或使用 Turbo/Nx 的受影响构建
 ```
 
 - “别名只在编辑器生效，构建报错”：记住 tsconfig 的 `paths` 仅影响 TS，构建器/测试需各自配置 alias。
-- “解析到了另一个副本”：检查 `pnpm why <pkg>`、`require.resolve('<pkg>/package.json')`/`import.meta.resolve`，排查全局/本地 link 污染，必要时 `pnpm unlink` 并重装。
+- “解析到了另一个副本”：检查 `pnpm why <pkg>`、`require.resolve('<pkg>/package.json')`/`import.meta.resolve`，排查全局/本地 linkEffectToSubscription 污染，必要时 `pnpm unlink` 并重装。
 - “产物命名不一致导致解析失败”：统一构建产物命名与 `exports`/`main/module` 字段。
 - “Tree-shaking 不生效”：确保 `sideEffects:false`、使用 ESM 产物、避免在入口产生副作用。
 
