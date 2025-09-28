@@ -15,12 +15,12 @@ export class RefImpl {
   /**
    * 双向链表的头链表， 收集依赖
    */
-  headSubscription: Link
+  headSubs: Link
 
   /**
    * 双向链表的tail链表， 收集依赖
    */
-  tailSubscription: Link
+  tailSubs: Link
 
   constructor(value) {
     this._value = value
@@ -48,8 +48,8 @@ export function trackRef(dep: RefImpl) {
 }
 
 export function triggerRef(dep: RefImpl) {
-  if (dep.headSubscription) {
-    propagate(dep.headSubscription)
+  if (dep.headSubs) {
+    propagate(dep.headSubs)
   }
 }
 

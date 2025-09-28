@@ -1,8 +1,32 @@
 import { RefImpl } from './ref'
 import { ReactiveEffect } from './effect'
 
+/**
+ * 依赖项。
+ * 就是ref
+ */
+interface Dep {
+  // 订阅者链表的头节点
+  headSubs: Link | undefined
+  // 订阅者链表的尾节点
+  tailSubs: Link | undefined
+}
+
+/**
+ * 订阅者
+ * 就是值变化的时候，要通知到的list集合，
+ * 在get value的时候被收集
+ */
+interface Sub {
+  headDeps: Link | undefined
+  tailDeps: Link | undefined
+}
+
 export interface Link {
-  sub: ReactiveEffect
+  // 订阅者
+  sub: Sub
+  // 依赖项
+  dep: Dep
   nextSub: Link | undefined
   prevSub: Link | undefined
 }
@@ -24,13 +48,13 @@ export function linkEffectToSubscription(dep: RefImpl, sub: ReactiveEffect) {
    * 1. 尾节点有，那就往尾节点后面加
    * 2. 如果尾节点没有，则表示第一次关联，那就往头节点加，头尾相同
    */
-  if (dep.tailSubscription) {
-    dep.tailSubscription.nextSub = newLink
-    newLink.prevSub = dep.tailSubscription
-    dep.tailSubscription = newLink
+  if (dep.tailSubs) {
+    dep.tailSubs.nextSub = newLink
+    newLink.prevSub = dep.tailSubs
+    dep.tailSubs = newLink
   } else {
-    dep.tailSubscription = newLink
-    dep.headSubscription = newLink
+    dep.tailSubs = newLink
+    dep.headSubs = newLink
   }
 }
 
