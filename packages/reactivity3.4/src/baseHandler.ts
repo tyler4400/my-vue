@@ -1,3 +1,5 @@
+import { track } from './reactiveEffect'
+
 export enum ReactiveFlags {
   IS_REACTIVE = '__v_isReactive', // 可以使用symbol
 }
@@ -7,6 +9,8 @@ export const mutableHandlers: ProxyHandler<object> = {
     if (key === ReactiveFlags.IS_REACTIVE) return true
 
     // 依赖收集 todo 应该让响应式属性 和 effect 映射起来
+    track(target, key)
+
     return Reflect.get(target, key, receiver)
   },
   set(target, key, value, receiver) {
