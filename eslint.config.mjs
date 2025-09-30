@@ -24,7 +24,7 @@ export default [
   js.configs.recommended,
 
   {
-    files: ['scripts/**/*.{js,ts}'],
+    files: ['scripts/**/*.{js,ts}', 'docs/**/*.{js,ts}'],
     languageOptions: { globals: globals.node }
   },
   // TypeScript 推荐（无类型感知，运行更快；需要类型感知见下方“可选增强”）

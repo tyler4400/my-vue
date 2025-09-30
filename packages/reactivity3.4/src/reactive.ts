@@ -1,24 +1,10 @@
 import { isObject } from '@vue/shared'
+import { mutableHandlers, ReactiveFlags } from '@vue/reactivity3.4'
 
-enum ReactiveFlags {
-  IS_REACTIVE = '__v_isReactive', // 可以使用symbol
-}
 /**
  * weakMap的key是原对象target，value是代理的proxy
  */
 const reactiveMap = new WeakMap()
-
-const mutableHandlers: ProxyHandler<object> = {
-  get(target, key, receiver) {
-    if (key === ReactiveFlags.IS_REACTIVE) return true
-    console.log('get handler', target, key, receiver)
-    return target[key]
-  },
-  set(target, key, value, receiver) {
-    console.log('set handler', target, key, value, receiver)
-    return true
-  },
-}
 
 export function reactive(target: object) {
   return createReactiveObject(target)
