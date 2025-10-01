@@ -5,8 +5,9 @@
   <title>02-effect</title>
 </head>
 <body>
-  <div id="app"></div>
-  <button id="btn">age+1</button>
+<p>姓名：<span id="name1"></span>， 年龄： <span id="age"></span></p>
+<p>姓名：<span id="name2"></span></p>
+<button id="count">age+1</button>
 
   <script type="module">
     import { effect, reactive } from '../dist/reactivity3.4.esm.js'
@@ -19,15 +20,19 @@
     const state = reactive(jack)
 
     effect(() => {
-      app.innerHTML = `姓名: ${state.name} 年龄: ${state.age}`
-    })
-    jack.age = 2
-    effect(() => {
-      app.innerHTML = `姓名: ${state.name}`
+      const name1 = state.name
+      const age = state.age
+      document.getElementById('name1').innerText = name1
+      document.getElementById('age').innerText = age
     })
 
-    btn.addEventListener('click', () => {
-      console.log(state.age)
+    effect(() => {
+      const name2 = state.name
+      document.getElementById('name2').innerText = name2
+    })
+
+    document.getElementById('count').addEventListener('click', () => {
+      state.age++
     })
   </script>
 </body>

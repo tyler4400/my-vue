@@ -1,3 +1,5 @@
+import { DepMap } from './types'
+
 /**
  * 副作用函数
  *
@@ -16,9 +18,18 @@ export function effect(fn: Function, options?: any) {
 
 export let activeEffect: ReactiveEffect
 
-class ReactiveEffect {
+export class ReactiveEffect {
   // 控制创建的effect是否是响应式的
   public active = true
+
+  // 用于记录当前effect执行了几次
+  public _trackId = 0
+
+  // 第几个依赖是谁？
+  public _depsLength: number = 0
+
+  // 记录当前effect， 被那些dep对象依赖， 双向关联
+  public deps: DepMap[] = []
 
   constructor(
     public fn: Function,
@@ -40,5 +51,19 @@ class ReactiveEffect {
 
   stop() {
     this.active = false
+  }
+}
+
+// effect和dep双向关联
+export const trackEffect = (effect: ReactiveEffect, dep: DepMap) => {
+  dep.set(effect, effect._trackId)
+  effect.deps[effect._depsLength++] = dep
+}
+
+export const triggerEffects = (dep: DepMap) => {
+  for (const effect of dep.keys()) {
+    if (effect.scheduler) {
+      effect.scheduler()
+    }
   }
 }
