@@ -1,4 +1,4 @@
-import { DepMap } from './types'
+import { DepMap, Scheduler } from './types'
 
 /**
  * 副作用函数
@@ -13,7 +13,13 @@ export function effect(fn: Function, options?: any) {
   // 默认执行一次
   _effect.run()
 
-  return _effect
+  if (options) {
+    // 用用户传递的覆盖掉内置的
+    Object.assign(_effect, options)
+  }
+  const runner = _effect.run.bind(_effect)
+  runner.effect = _effect
+  return runner
 }
 
 export let activeEffect: ReactiveEffect
@@ -61,7 +67,7 @@ export class ReactiveEffect {
 
   constructor(
     public fn: Function,
-    public scheduler?: any,
+    public scheduler?: Scheduler,
   ) {}
 
   run() {

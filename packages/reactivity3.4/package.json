@@ -1,6 +1,6 @@
 {
   "name": "@vue/reactivity3.4",
-  "version": "1.0.0",
+  "version": "3.4.0",
   "description": "响应式模块. 对应vue3.4版本。https://www.bilibili.com/video/BV1zBc2e4EaZ",
   "main": "dist/reactivity.cjs.js",
   "module": "dist/reactivity.esm.js",

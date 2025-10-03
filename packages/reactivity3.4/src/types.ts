@@ -9,3 +9,5 @@ export type DepMap = Map<ReactiveEffect, number> & {
   cleanup?: () => void
   depName?: ObJKey // 开发时为了让dep在调试时更有辨识度
 }
+
+export type Scheduler = any
