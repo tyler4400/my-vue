@@ -126,12 +126,31 @@ export const trackEffect = (effect: ReactiveEffect, dep: DepMap) => {
      * 最终得到 [B, A]，且旧关系被正确移除。
      */
     const currentDepIndex = effect._depsLength
-    const oldDep = effect.deps[currentDepIndex]
-    if (oldDep !== dep) {
-      // 说明oldDep在本轮顺序中对不上，要把新的加上，旧的删掉
-      effect.deps[currentDepIndex] = dep
-      if (oldDep) cleanDepEffect(oldDep, effect)
-    }
+
+    /**
+     * 以下代码存在的bug：
+     * const currentDepIndex = effect._depsLength
+     * const oldDep = effect.deps[currentDepIndex]
+     * if (oldDep !== dep) {
+     *   effect.deps[currentDepIndex] = dep
+     *   if (oldDep) cleanDepEffect(oldDep, effect)
+     * }
+     * effect._depsLength++
+     *
+     * 复盘：为什么会误删
+     * 场景：旧一轮 effect.deps = [A, B, C]，新一轮访问顺序是 [B, A]。
+     * 第一次访问 B：
+     * 位置 0 被覆盖为 B，并解绑旧位置 0 的 A。
+     * 暂态数组变为 [B, B, C]（位置 1 仍是旧的 B）。
+     * 第二次访问 A：
+     * 位置 1 被覆盖为 A，并解绑旧位置 1 的 B。
+     * 由于“解绑旧位置 1 的 B”会从 B 的 dep 中删除当前 effect，这会把“刚在位置 0 新增的 B 订阅”一并删掉（因为 dep.delete(effect) 不区分数组里哪个位置引用了它）。
+     * 结果：本轮结束后，B 的订阅被误删，后续对 B 的变更将不再触发该 effect。
+     */
+
+    // 只覆盖当前位置并推进游标，不在此处解绑旧依赖。
+    // 这样在依赖访问顺序发生交换时，避免误删仍需保留的 dep（统一由 postCleanEffect 收尾清理 [n, len)）。
+    effect.deps[currentDepIndex] = dep
     effect._depsLength++
   }
 

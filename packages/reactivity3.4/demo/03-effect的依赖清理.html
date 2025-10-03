@@ -2,24 +2,21 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>02-effect</title>
+  <title>03-effect的依赖清理</title>
 </head>
 <body>
 <p>
   姓名：<span id="name1"></span>，
-  年龄： <span id="age"></span>
+  年龄： <span id="age"></span>，
   性别： <span id="gender"></span>
 </p>
 
 <button id="count">设置age为40</button>
-<button id="change-gender">gender不显示之后，改变gender为’male'</button>
+<button id="change-gender">gender不显示之后，改变gender为’male'，effect不应该再次执行</button>
 
   <script type="module">
     import { effect, reactive } from '../dist/reactivity3.4.esm.js'
-    // import {
-    //   reactive,
-    //   effect,
-    // } from '../../../node_modules/vue/dist/vue.esm-browser.prod.js'
+    // import { reactive, effect } from '../../../node_modules/vue/dist/vue.esm-browser.prod.js'
     let times = 1
 
     const jack = { name: 'jack', age: 18, gender: 'female' };
