@@ -29,9 +29,11 @@ function preCleanEffect(effect: ReactiveEffect) {
   effect._trackId++
   // 每次轮回开始 依赖数初始都是0， 都是从0开始收集的
   effect._depsLength = 0
+  effect._running++
 }
 
 function postCleanEffect(effect: ReactiveEffect) {
+  effect._running--
   // deps数组的长度
   const len = effect.deps.length
   // 有效依赖的个数
@@ -54,6 +56,12 @@ export class ReactiveEffect {
    * 每次重新收集依赖的Id都是唯一的，相当于标记轮回转世的每一世
    */
   public _trackId = 0
+
+  /**
+   * 当前effect是否正在执行。
+   * effect.run的时候可能会触发effect再次执行，从而无限递归调用
+   */
+  public _running = 0
 
   /**
    * 本次 effect.run()运行完之后， 它代表执行期间收集的仍然有效的依赖数量
@@ -193,8 +201,11 @@ export const trackEffect = (effect: ReactiveEffect, dep: DepMap) => {
 
 export const triggerEffects = (dep: DepMap) => {
   for (const effect of dep.keys()) {
-    if (effect.scheduler) {
-      effect.scheduler()
+    // 如果不是正在执行, 才能执行
+    if (!effect._running) {
+      if (effect.scheduler) {
+        effect.scheduler() // effect.run()
+      }
     }
   }
 }

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>06-effect递归调用陷阱</title>
+</head>
+<body>
+<div id="id"></div>
+<div id="runTimes"></div>
+<code>
+  document.getElementById('id').innerText = state.name
+  state.name = Math.random()
+  track -> trigger --> track ………… 会导致maximum call stack size exceeded
+</code>
+<script type="module">
+  import { effect, reactive } from '../dist/reactivity3.4.esm.js'
+  // import { reactive, effect } from '../../../node_modules/vue/dist/vue.esm-browser.prod.js'
+
+  const jack = {name: 'jack', age: 18}
+  const state = reactive(jack)
+
+  let runTimes = 1
+  effect(() => {
+    console.log('effect运行次数：', runTimes++)
+    document.getElementById('runTimes').innerText = runTimes + ''
+    document.getElementById('id').innerText = state.name
+    state.name = Math.random()
+  })
+</script>
+</body>
+</html>
