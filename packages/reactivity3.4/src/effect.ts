@@ -134,6 +134,7 @@ export const trackEffect = (effect: ReactiveEffect, dep: DepMap) => {
     const currentDepIndex = effect._depsLength
 
     /**
+     * 版本1️⃣
      * 以下代码存在的bug：
      * const currentDepIndex = effect._depsLength
      * const oldDep = effect.deps[currentDepIndex]
@@ -154,9 +155,35 @@ export const trackEffect = (effect: ReactiveEffect, dep: DepMap) => {
      * 结果：本轮结束后，B 的订阅被误删，后续对 B 的变更将不再触发该 effect。
      */
 
-    // 只覆盖当前位置并推进游标，不在此处解绑旧依赖。
-    // 这样在依赖访问顺序发生交换时，避免误删仍需保留的 dep（统一由 postCleanEffect 收尾清理 [n, len)）。
+    /**
+     * 版本2️⃣
+     *
+     *     只覆盖当前位置并推进游标，不在此处解绑旧依赖。
+     *     这样在依赖访问顺序发生交换时，避免误删仍需保留的 dep（统一由 postCleanEffect 收尾清理 [n, len)）。
+     *
+     *     effect.deps[currentDepIndex] = dep
+     *     effect._depsLength++
+     * 需要把中间被覆盖的位置也清理掉
+     *
+     */
+    const oldDep = effect.deps[currentDepIndex]
     effect.deps[currentDepIndex] = dep
+    if (oldDep && oldDep !== dep) {
+      /**
+       我们目前改成“只覆盖当前位置 + 仅清理尾部 [n, len)”以后，
+       若旧依赖位于“被覆盖的位置而不是尾部”，就不会被真正从它自己的 dep 映射表里移除，
+       从而形成“effect.deps 不含 name，但 targetMap[name].dep 里仍残留 effect”的不一致。于是修改 name时 仍会触发。
+       * 版本3️⃣
+       * - 若 oldDep !== dep 且 oldDep.get(effect) !== effect._trackId（说明 oldDep 在“本轮尚未被重新收集”，
+       * 也就是说后面不会在本轮早于当前位置出现），则可以安全解绑 oldDep。
+       * - 反之，如果 oldDep.get(effect) === effect._trackId，代表它在本轮更早的位置已经被收集（典型的“顺序交换”场景），
+       * 此时不能解绑，否则会把刚刚新增的订阅也删掉。
+       */
+      const oldTrackId = oldDep.get(effect)
+      if (oldTrackId !== effect._trackId) {
+        cleanDepEffect(oldDep, effect)
+      }
+    }
     effect._depsLength++
   }
 
