@@ -28,14 +28,14 @@ const createDep = (cleanup: () => void, key: ObJKey): DepMap => {
   // 创建的收集器还是一个map
   const dep: DepMap = new Map<ReactiveEffect, number>()
   dep.cleanup = cleanup
-  dep.myVueName = key
+  dep.depName = key
   return dep
 }
 
 export function track(target: object, key: ObJKey) {
+  console.log(target, key, activeEffect)
   // activeEffect 有这个属性,说明这个key是在effect中访问的,没有说明是在effect之外访问的不用进行收集
   if (activeEffect) {
-    console.log('track', target, key, activeEffect)
     let depsMap = targetMap.get(target)
     if (!depsMap) {
       targetMap.set(target, (depsMap = new Map()))

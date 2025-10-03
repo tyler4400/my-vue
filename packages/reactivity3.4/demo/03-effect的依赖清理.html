@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>02-effect</title>
+</head>
+<body>
+<p>
+  姓名：<span id="name1"></span>，
+  年龄： <span id="age"></span>
+  性别： <span id="gender"></span>
+</p>
+
+<button id="count">设置age为40</button>
+<button id="change-gender">gender不显示之后，改变gender为’male'</button>
+
+  <script type="module">
+    import { effect, reactive } from '../dist/reactivity3.4.esm.js'
+    // import {
+    //   reactive,
+    //   effect,
+    // } from '../../../node_modules/vue/dist/vue.esm-browser.prod.js'
+    let times = 1
+
+    const jack = { name: 'jack', age: 18, gender: 'female' };
+    const state = reactive(jack)
+
+    effect(() => {
+      console.log('effect第几次执行：' + times++)
+      const name1 = state.name
+      const age = state.age
+      document.getElementById('name1').innerText = name1
+      document.getElementById('age').innerText = age
+      // 年龄18以上，gender的依赖就没有了，测试gender隐藏后，改变state.gender是否会触发渲染，以及看gender是否收集了依赖。期望是不收集
+      document.getElementById('gender').innerText = age > 18 ? '保密' : state.gender
+    })
+
+    document.getElementById('count').addEventListener('click', () => {
+      state.age = 40
+    })
+
+    document.getElementById('change-gender').addEventListener('click', () => {
+      state.gender = 'male'
+      console.log(state.gender, 'effect不应该再次执行')
+    })
+  </script>
+</body>
+</html>
