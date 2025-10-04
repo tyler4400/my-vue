@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>09-ref基本使用</title>
+</head>
+<body>
+<h1>ref(基本属性)</h1>
+<div id="runTimes"></div>
+<button id="btn">+ 1</button>
+<h1>ref(对象)</h1>
+<div id="jackson"></div>
+<button id="btn2">随机name</button>
+<button id="btn1">aeg+1</button>
+
+<script type="module">
+  import { effect, ref } from '../dist/reactivity3.4.esm.js'
+  // import { effect, ref } from '../../reactivity-example/dist/reactivity-example.esm.js'
+  // import { reactive, effect } from '../../../node_modules/vue/dist/vue.esm-browser.prod.js'
+
+  const runTimes = ref(1)
+  effect(() => {
+    document.getElementById('runTimes').innerText = '运行了：' + runTimes.value + '次'
+  })
+  document.getElementById('btn').addEventListener('click', () => {
+    runTimes.value++
+  })
+
+  const jackson = ref({ name: 'jack', age: 18 })
+  effect(() => {
+    document.getElementById('jackson').innerText = `name: ${jackson.value.name}, age: ${jackson.value.age}`
+  })
+  document.getElementById('btn1').addEventListener('click', () => {
+    jackson.value.age++
+  })
+  document.getElementById('btn2').addEventListener('click', () => {
+    jackson.value.name = Math.random()
+  })
+
+</script>
+</body>
+</html>

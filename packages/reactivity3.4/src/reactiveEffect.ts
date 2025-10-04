@@ -24,7 +24,7 @@ import { DepMap, ObJKey } from './types'
  */
 const targetMap = new WeakMap<object, Map<ObJKey, DepMap>>()
 
-const createDep = (cleanup: () => void, key: ObJKey): DepMap => {
+export const createDep = (cleanup: () => void, key?: ObJKey): DepMap => {
   // 创建的收集器还是一个map
   const dep: DepMap = new Map<ReactiveEffect, number>()
   dep.cleanup = cleanup

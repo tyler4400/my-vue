@@ -6,10 +6,6 @@ import { mutableHandlers, ReactiveFlags } from './baseHandler'
  */
 const reactiveMap = new WeakMap()
 
-export function reactive(target: object) {
-  return createReactiveObject(target)
-}
-
 function createReactiveObject(target: object) {
   // 统一判断，响应式对象target必须是对象
   if (!isObject(target)) return target
@@ -24,4 +20,12 @@ function createReactiveObject(target: object) {
   const proxy = new Proxy(target, mutableHandlers)
   reactiveMap.set(target, proxy)
   return proxy
+}
+
+export function reactive(target: object) {
+  return createReactiveObject(target)
+}
+
+export function toReactive(value: any) {
+  return isObject(value) ? reactive(value) : value
 }
