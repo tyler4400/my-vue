@@ -1,4 +1,4 @@
-import { DepMap, Scheduler } from './types'
+import { DepMap, EffectOptions, Scheduler } from './types'
 
 /**
  * 副作用函数
@@ -7,7 +7,7 @@ import { DepMap, Scheduler } from './types'
  * @param fn 重新执行的函数
  * @param options
  */
-export function effect(fn: Function, options?: any) {
+export function effect(fn: Function, options?: EffectOptions) {
   const _effect = new ReactiveEffect(fn, () => _effect.run())
 
   // 默认执行一次

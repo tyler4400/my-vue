@@ -10,4 +10,8 @@ export type DepMap = Map<ReactiveEffect, number> & {
   depName?: ObJKey // 开发时为了让dep在调试时更有辨识度
 }
 
-export type Scheduler = any
+export type Scheduler = (...args: any[]) => any
+
+export type EffectOptions = {
+  scheduler?: Scheduler
+}
