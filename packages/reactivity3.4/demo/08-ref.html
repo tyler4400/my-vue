@@ -14,9 +14,9 @@
 <button id="btn1">aeg+1</button>
 
 <script type="module">
-  import { effect, ref } from '../dist/reactivity3.4.esm.js'
+  // import { effect, ref } from '../dist/reactivity3.4.esm.js'
   // import { effect, ref } from '../../reactivity-example/dist/reactivity-example.esm.js'
-  // import { reactive, effect } from '../../../node_modules/vue/dist/vue.esm-browser.prod.js'
+  import { ref, effect } from '../../../node_modules/vue/dist/vue.esm-browser.prod.js'
 
   const runTimes = ref(1)
   effect(() => {

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>09-toRef/toRefs/proxyRefs</title>
+</head>
+<body>
+<h2>toRef 单属性转换</h2>
+<div>name: <span id="name-toRef"></span></div>
+<button id="btn-toRef-state">state.name = rose</button>
+<button id="btn-toRef-ref">nameRef.value = tom</button>
+
+<h2>toRefs 批量转换与解构</h2>
+<div>a: <span id="a-toRefs"></span> | b: <span id="b-toRefs"></span></div>
+<button id="btn-toRefs-a">a.value++</button>
+<button id="btn-toRefs-b">b.value++</button>
+
+<h2>proxyRefs 自动解包与透传</h2>
+<div>user: <span id="user-proxyRefs"></span></div>
+<button id="btn-proxy-name">user.name = 随机</button>
+<button id="btn-proxy-age">user.age++</button>
+
+<script type="module">
+  import { reactive, effect, toRef, toRefs, ref, proxyRefs } from '../dist/reactivity3.4.esm.js'
+  // 如需对照 Vue 行为，可切换到下行导入：
+  // import { reactive, effect, toRef, toRefs, ref, proxyRefs } from '../../../node_modules/vue/dist/vue.esm-browser.prod.js'
+
+  // 1) toRef 单属性
+  const state1 = reactive({ name: 'jack', age: 18 })
+  const nameRef = toRef(state1, 'name')
+  effect(() => {
+    document.getElementById('name-toRef').innerText = String(nameRef.value)
+  })
+  document.getElementById('btn-toRef-state').addEventListener('click', () => {
+    state1.name = 'rose'
+  })
+  document.getElementById('btn-toRef-ref').addEventListener('click', () => {
+    nameRef.value = 'tom'
+  })
+
+  // 2) toRefs 批量
+  const state2 = reactive({ a: 1, b: 2 })
+  const { a, b } = toRefs(state2)
+  effect(() => {
+    document.getElementById('a-toRefs').innerText = String(a.value)
+    document.getElementById('b-toRefs').innerText = String(b.value)
+  })
+  document.getElementById('btn-toRefs-a').addEventListener('click', () => {
+    a.value++
+  })
+  document.getElementById('btn-toRefs-b').addEventListener('click', () => {
+    b.value++
+  })
+
+  // 3) proxyRefs 自动解包
+  const user = proxyRefs({ name: ref('jack'), age: ref(18) })
+  effect(() => {
+    document.getElementById('user-proxyRefs').innerText = `${user.name} (${user.age})`
+  })
+  document.getElementById('btn-proxy-name').addEventListener('click', () => {
+    user.name = Math.random().toString(36).slice(2, 7)
+  })
+  document.getElementById('btn-proxy-age').addEventListener('click', () => {
+    user.age++
+  })
+</script>
+</body>
+</html>
+
+
