@@ -1,4 +1,5 @@
 import { DepMap, EffectOptions, Scheduler } from './types'
+import { DirtyLevels } from './constants'
 
 /**
  * 副作用函数
@@ -29,6 +30,7 @@ function preCleanEffect(effect: ReactiveEffect) {
   effect._trackId++
   // 每次轮回开始 依赖数初始都是0， 都是从0开始收集的
   effect._depsLength = 0
+  // 目的是防止无限调用自身
   effect._running++
 }
 
@@ -70,6 +72,21 @@ export class ReactiveEffect {
    */
   public _depsLength: number = 0
 
+  /**
+   * 是否是脏值
+   * 每次运行都会将其设置为false。
+   * 当前effect的scheduler被触发的时候会将其设置为true。
+   * computed的逻辑是，scheduler -> dwadad -> dawda todo
+   */
+  public _dirtyLevel = DirtyLevels.Dirty
+
+  get dirty() {
+    return this._dirtyLevel === DirtyLevels.Dirty
+  }
+  set dirty(v) {
+    this._dirtyLevel = v ? DirtyLevels.Dirty : DirtyLevels.NoDirty
+  }
+
   // 记录当前effect， 被那些dep对象依赖， 双向关联
   public deps: DepMap[] = []
 
@@ -79,6 +96,9 @@ export class ReactiveEffect {
   ) {}
 
   run() {
+    // 每次运行后effect变为 no_dirty
+    this.dirty = false
+
     // 不是激活的，执行后，什么都不用做 不用做额外的处理
     if (!this.active) return this.fn()
 
@@ -201,6 +221,11 @@ export const trackEffect = (effect: ReactiveEffect, dep: DepMap) => {
 
 export const triggerEffects = (dep: DepMap) => {
   for (const effect of dep.keys()) {
+    // 当前这个值是不脏的, 但是触发更新需要将值变为脏值
+    if (!effect.dirty) {
+      effect.dirty = true
+    }
+
     // 如果不是正在执行, 才能执行
     if (!effect._running) {
       if (effect.scheduler) {

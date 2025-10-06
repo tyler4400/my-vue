@@ -15,3 +15,16 @@ export type Scheduler = (...args: any[]) => any
 export type EffectOptions = {
   scheduler?: Scheduler
 }
+
+export type ComputedGetter<T> = (oldValue?: T) => T
+export type ComputedSetter<T> = (newValue: T) => void
+
+export interface WritableComputedOptions<T> {
+  get: ComputedGetter<T>
+  set: ComputedSetter<T>
+}
+
+// 只要含有dep的， 都可以
+export interface DepLike {
+  dep: DepMap
+}

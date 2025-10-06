@@ -1,7 +1,7 @@
 import { toReactive } from './reactive'
 import { createDep } from './reactiveEffect'
 import { activeEffect, trackEffect, triggerEffects } from './effect'
-import { DepMap, ObJKey } from './types'
+import { DepLike, DepMap, ObJKey } from './types'
 
 function createRef(value: any) {
   return new RefImpl(value)
@@ -35,7 +35,7 @@ class RefImpl {
   }
 }
 
-function trackRefValue(ref: RefImpl) {
+export function trackRefValue(ref: DepLike) {
   if (activeEffect) {
     //这里的“两个问号”是空值合并赋值运算符 ??=。它表示：仅当左侧为 null 或 undefined 时，才把右侧的值赋给左侧
     ref.dep ??= createDep(() => (ref.dep = undefined))
@@ -43,7 +43,7 @@ function trackRefValue(ref: RefImpl) {
   }
 }
 
-function triggerRefValue(ref: RefImpl) {
+export function triggerRefValue(ref: DepLike) {
   const dep = ref.dep
   if (dep) triggerEffects(dep)
 }

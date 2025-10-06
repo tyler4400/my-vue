@@ -1,5 +1,6 @@
 import { isObject } from '@vue/shared'
-import { mutableHandlers, ReactiveFlags } from './baseHandler'
+import { mutableHandlers } from './baseHandler'
+import { ReactiveFlags } from './constants'
 
 /**
  * weakMap的key是原对象target，value是代理的proxy

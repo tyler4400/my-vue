@@ -45,6 +45,7 @@ editing_guidelines:
   - "不修改打包产物与外部依赖，改动集中于 src/。"
   - "编辑前先阅读上下游文件，必要时列出影响面。"
   - "为核心算法添加细致、解释‘为什么’的中文注释。"
+  - "无需运行pnpm run lint"
 
 repository_terms:
   files:

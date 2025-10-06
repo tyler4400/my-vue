@@ -33,7 +33,6 @@ export const createDep = (cleanup: () => void, key?: ObJKey): DepMap => {
 }
 
 export function track(target: object, key: ObJKey) {
-  console.log(target, key, activeEffect)
   // activeEffect 有这个属性,说明这个key是在effect中访问的,没有说明是在effect之外访问的不用进行收集
   if (activeEffect) {
     let depsMap = targetMap.get(target)
