@@ -76,7 +76,6 @@ export class ReactiveEffect {
    * 是否是脏值
    * 每次运行都会将其设置为false。
    * 当前effect的scheduler被触发的时候会将其设置为true。
-   * computed的逻辑是，scheduler -> dwadad -> dawda todo
    */
   public _dirtyLevel = DirtyLevels.Dirty
 

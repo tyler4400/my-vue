@@ -17,8 +17,10 @@ import { trackRefValue, triggerRefValue } from '@vue/reactivity3.4'
  * ref触发依赖流程：ref.value(set) -> triggerEffects -> effect.fn()
  *
  * 而computed多绕了一层
- * computed依赖收集流程: 外部fn读取computed.value -> this.effect.run() -> getter执行 -> getter内部的响应式变量收集this.effect
- * computed依赖触发流程: getter内部响应式变量变化 -> triggerEffects -> 外部fn执行 ···-> 轮回
+ * computed依赖收集流程: 外部fn读取computed.value -> this.effect.run()(dirty=false) -> getter执行 -> getter内部的响应式变量收集this.effect
+ * computed依赖触发流程: getter内部响应式变量变化 -> triggerEffects(dirty=true) -> 外部fn执行 ···-> 轮回
+ *
+ * 而如果dirty=false的时候: 外部fn读取computed.value -> this.effect.run()就不用执行，也就是达到了缓存的目的
  *
  */
 class ComputedRefImp<T> {
