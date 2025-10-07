@@ -7,7 +7,7 @@ function createRef(value: any) {
   return new RefImpl(value)
 }
 
-class RefImpl {
+export class RefImpl {
   __v_isRef = true
 
   private _value: any
@@ -81,7 +81,7 @@ class ObjectRefImpl {
  * ```
  */
 export function isRef(value) {
-  return !!(value && value['__v_isRef'])
+  return !!(value && value?.['__v_isRef'])
 }
 
 /**

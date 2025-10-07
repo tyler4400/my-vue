@@ -23,7 +23,7 @@ import { trackRefValue, triggerRefValue } from '@vue/reactivity3.4'
  * 而如果dirty=false的时候: 外部fn读取computed.value -> this.effect.run()就不用执行，也就是达到了缓存的目的
  *
  */
-class ComputedRefImp<T> {
+export class ComputedRefImp<T> {
   /**
    * 缓存的值。
    * @private
