@@ -36,7 +36,18 @@ export function watch(source: WatchSource, cb: WatchCallback, options: WatchOpti
   return doWatch(source, cb, options)
 }
 
-export function doWatch(source: WatchSource, cb: WatchCallback, { deep, immediate }: WatchOptions) {
+export type WatchEffect = () => void
+
+/**
+ * 本质上就是一个Effect
+ * @param effect
+ */
+export function watchEffect(effect: WatchEffect) {
+  // 没有cb 就是watchEffect
+  return doWatch(effect)
+}
+
+export function doWatch(source: WatchSource, cb: WatchCallback = null, { deep, immediate }: WatchOptions = {}) {
   // 产生一个可以给ReactiveEffect来使用的getter，需要对这个对象进行取值操作，会关联当前的reactiveEffect
   const reactiveGetter = (_source: object) => traverse(_source, deep === false ? 0 : deep)
   let getter: Function

@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <title>12-watchEffect</title>
+  </head>
+  <body>
+    <h2>watchEffect 基本用法</h2>
+    <div>
+      greeting:
+      <span id="greet"></span>
+    </div>
+    <div>
+      触发次数:
+      <span id="runs">0</span>
+    </div>
+    <button id="btn-inc">count + 1</button>
+    <button id="btn-name">name = 随机</button>
+
+    <script type="module">
+      import { reactive, watchEffect } from '../dist/reactivity3.4.esm.js'
+      // 如需对照 Vue 行为，可切换到下行导入：
+      // import { reactive, watchEffect } from '../../../node_modules/vue/dist/vue.esm-browser.prod.js'
+
+      const state = reactive({ name: 'jack', count: 0 })
+
+      const elGreet = document.getElementById('greet')
+      const elRuns = document.getElementById('runs')
+
+      let runTimes = 0
+      // watchEffect 会自动收集内部读取到的依赖（state.name 与 state.count）
+      watchEffect(() => {
+        runTimes++
+        elGreet.innerText = `${state.name} (${state.count})`
+        elRuns.innerText = String(runTimes)
+        // 注意：不需要手动声明依赖，读取即收集
+      })
+
+      document.getElementById('btn-inc').addEventListener('click', () => {
+        state.count++
+      })
+      document.getElementById('btn-name').addEventListener('click', () => {
+        state.name = Math.random().toString(36).slice(2, 7)
+      })
+    </script>
+  </body>
+</html>
