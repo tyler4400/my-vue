@@ -1,234 +1,312 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
-<head>
-  <meta charset="UTF-8">
-  <title>11-watch实现</title>
-</head>
-<body>
-<h2>函数源 watch（new/old 验证）</h2>
-<div>
-  nested.x: <span id="fn-x"></span>
-  <div>
-    <button id="btn-fn-inc-x">nested.x + 1</button>
-  </div>
-  <div>
-    触发次数: <span id="fn-calls">0</span>
-    | newValue: <span id="fn-new">-</span>
-    | oldValue: <span id="fn-old">-</span>
-  </div>
-  <hr/>
-</div>
+  <head>
+    <meta charset="UTF-8" />
+    <title>11-watch实现</title>
+  </head>
+  <body>
+    <h2>函数源 watch（new/old 验证）</h2>
+    <div>
+      nested.x:
+      <span id="fn-x"></span>
+      <div>
+        <button id="btn-fn-inc-x">nested.x + 1</button>
+      </div>
+      <div>
+        触发次数:
+        <span id="fn-calls">0</span>
+        | newValue:
+        <span id="fn-new">-</span>
+        | oldValue:
+        <span id="fn-old">-</span>
+      </div>
+      <hr />
+    </div>
 
-<h2>ref 源 watch（new/old 验证）</h2>
-<div>
-  count: <span id="ref-count"></span>
-  <div>
-    <button id="btn-ref-inc">count.value + 1</button>
-    <button id="btn-ref-rand">count.value = 随机</button>
-  </div>
-  <div>
-    触发次数: <span id="ref-calls">0</span>
-    | newValue: <span id="ref-new">-</span>
-    | oldValue: <span id="ref-old">-</span>
-  </div>
-  <hr/>
-</div>
+    <h2>ref 源 watch（new/old 验证）</h2>
+    <div>
+      count:
+      <span id="ref-count"></span>
+      <div>
+        <button id="btn-ref-inc">count.value + 1</button>
+        <button id="btn-ref-rand">count.value = 随机</button>
+      </div>
+      <div>
+        触发次数:
+        <span id="ref-calls">0</span>
+        | newValue:
+        <span id="ref-new">-</span>
+        | oldValue:
+        <span id="ref-old">-</span>
+      </div>
+      <hr />
+    </div>
 
-<h2>reactive 对象 watch（无限深，快照新旧值）</h2>
-<div>
-  a: <span id="obj-a"></span>
-  | nested.y: <span id="obj-y"></span>
-  | deep.z: <span id="obj-z"></span>
-  | list: <span id="obj-list"></span>
-  <div>
-    <button id="btn-obj-a">a + 1</button>
-    <button id="btn-obj-y">nested.y + 1</button>
-    <button id="btn-obj-z">deep.z + 1</button>
-    <button id="btn-obj-push">list.push(随机)</button>
-  </div>
-  <div>
-    触发次数: <span id="obj-calls">0</span>
-  </div>
-  <div>
-    old 快照: <span id="obj-old">-</span>
-  </div>
-  <div>
-    new 快照: <span id="obj-new">-</span>
-  </div>
-  <hr/>
-</div>
+    <h2>reactive 对象 watch（无限深，快照新旧值）</h2>
+    <div>
+      a:
+      <span id="obj-a"></span>
+      | nested.y:
+      <span id="obj-y"></span>
+      | deep.z:
+      <span id="obj-z"></span>
+      | list:
+      <span id="obj-list"></span>
+      <div>
+        <button id="btn-obj-a">a + 1</button>
+        <button id="btn-obj-y">nested.y + 1</button>
+        <button id="btn-obj-z">deep.z + 1</button>
+        <button id="btn-obj-push">list.push(随机)</button>
+      </div>
+      <div>
+        触发次数:
+        <span id="obj-calls">0</span>
+      </div>
+      <div>
+        old 快照:
+        <span id="obj-old">-</span>
+      </div>
+      <div>
+        new 快照:
+        <span id="obj-new">-</span>
+      </div>
+      <hr />
+    </div>
 
-<h2>reactive 深度验证（deep: 1 与 deep: 2）</h2>
-<div>
-  <span>值： </span>l1.l2.l3.n: <span id="d-n"></span>
-  <div>
-    <button id="btn-d-l1-replace">替换 l1（同引用新对象，期望触发 deep:1/2）</button>
-    <button id="btn-d-l2-inc">l2 层字段变更（期望触发 deep:2，不触发 deep:1）</button>
-    <button id="btn-d-l3-inc">l3 层字段变更（期望均不触发）</button>
-    <button id="btn-d-another-inc">another.x + 1（期望触发 deep:1/2）</button>
-  </div>
-  <div>
-    deep:1 次数: <span id="d1-calls">0</span>
-  </div>
-  <div>
-    deep:1 old: <span id="d1-old">-</span>
-  </div>
-  <div>
-    deep:1 new: <span id="d1-new">-</span>
-  </div>
-  <div>
-    deep:2 次数: <span id="d2-calls">0</span>
-  </div>
-  <div>
-    deep:2 old: <span id="d2-old">-</span>
-  </div>
-  <div>
-    deep:2 new: <span id="d2-new">-</span>
-  </div>
-  <hr/>
-</div>
+    <h2>reactive 深度验证（deep: 1 与 deep: 2）</h2>
+    <div>
+      <span>值：</span>
+      l1.l2.l3.n:
+      <span id="d-n"></span>
+      <div>
+        <button id="btn-d-l1-replace">替换 l1（同引用新对象，期望触发 deep:1/2）</button>
+        <button id="btn-d-l2-inc">l2 层字段变更（期望触发 deep:2，不触发 deep:1）</button>
+        <button id="btn-d-l3-inc">l3 层字段变更（期望均不触发）</button>
+        <button id="btn-d-another-inc">another.x + 1（期望触发 deep:1/2）</button>
+      </div>
+      <div>
+        deep:1 次数:
+        <span id="d1-calls">0</span>
+      </div>
+      <div>
+        deep:1 old:
+        <span id="d1-old">-</span>
+      </div>
+      <div>
+        deep:1 new:
+        <span id="d1-new">-</span>
+      </div>
+      <div>
+        deep:2 次数:
+        <span id="d2-calls">0</span>
+      </div>
+      <div>
+        deep:2 old:
+        <span id="d2-old">-</span>
+      </div>
+      <div>
+        deep:2 new:
+        <span id="d2-new">-</span>
+      </div>
+      <hr />
+    </div>
 
-<script type="module">
-  import { reactive, ref, watch, effect } from '../dist/reactivity3.4.esm.js'
-  // import { reactive, ref, watch, effect } from '../../../node_modules/vue/dist/vue.esm-browser.prod.js'
+    <h2>immediate 参数验证</h2>
+    <div>
+      imm:
+      <span id="imm-value"></span>
+      <div>
+        <button id="btn-imm-inc">imm.value + 1</button>
+      </div>
+      <div>
+        触发次数:
+        <span id="imm-calls">0</span>
+        | newValue:
+        <span id="imm-new">-</span>
+        | oldValue:
+        <span id="imm-old">-</span>
+      </div>
+      <div>期望：页面加载后立即触发一次回调（old 为 undefined），其后与普通 watch 一致</div>
+      <hr />
+    </div>
 
-  // ========== 1) 函数源 ==========
-  const stateFn = reactive({ nested: { x: 1 } })
-  const elFnX = document.getElementById('fn-x')
-  const elFnCalls = document.getElementById('fn-calls')
-  const elFnNew = document.getElementById('fn-new')
-  const elFnOld = document.getElementById('fn-old')
-  effect(() => {
-    elFnX.innerText = String(stateFn.nested.x)
-  })
-  let callsFn = 0
-  watch(() => stateFn.nested.x, (newValue, oldValue) => {
-    callsFn++
-    elFnCalls.innerText = String(callsFn)
-    elFnNew.innerText = String(newValue)
-    elFnOld.innerText = String(oldValue)
-    console.log('[watch fn] nv:', newValue, 'ov:', oldValue)
-  })
-  document.getElementById('btn-fn-inc-x').addEventListener('click', () => {
-    stateFn.nested.x++
-  })
+    <script type="module">
+      import { reactive, ref, watch, effect } from '../dist/reactivity3.4.esm.js'
+      // import { reactive, ref, watch, effect } from '../../../node_modules/vue/dist/vue.esm-browser.prod.js'
 
-  // ========== 2) ref 源 ==========
-  const count = ref(0)
-  const elRefCount = document.getElementById('ref-count')
-  const elRefCalls = document.getElementById('ref-calls')
-  const elRefNew = document.getElementById('ref-new')
-  const elRefOld = document.getElementById('ref-old')
-  effect(() => {
-    elRefCount.innerText = String(count.value)
-  })
-  let callsRef = 0
-  watch(count, (newValue, oldValue) => {
-    callsRef++
-    elRefCalls.innerText = String(callsRef)
-    elRefNew.innerText = String(newValue)
-    elRefOld.innerText = String(oldValue)
-    console.log('[watch ref] nv:', newValue, 'ov:', oldValue)
-  })
-  document.getElementById('btn-ref-inc').addEventListener('click', () => {
-    count.value++
-  })
-  document.getElementById('btn-ref-rand').addEventListener('click', () => {
-    count.value = Math.floor(Math.random() * 100)
-  })
+      // ========== 1) 函数源 ==========
+      const stateFn = reactive({ nested: { x: 1 } })
+      const elFnX = document.getElementById('fn-x')
+      const elFnCalls = document.getElementById('fn-calls')
+      const elFnNew = document.getElementById('fn-new')
+      const elFnOld = document.getElementById('fn-old')
+      effect(() => {
+        elFnX.innerText = String(stateFn.nested.x)
+      })
+      let callsFn = 0
+      watch(
+        () => stateFn.nested.x,
+        (newValue, oldValue) => {
+          callsFn++
+          elFnCalls.innerText = String(callsFn)
+          elFnNew.innerText = String(newValue)
+          elFnOld.innerText = String(oldValue)
+          console.log('[watch fn] nv:', newValue, 'ov:', oldValue)
+        },
+      )
+      document.getElementById('btn-fn-inc-x').addEventListener('click', () => {
+        stateFn.nested.x++
+      })
 
-  // ========== 3) reactive 源（无限深） ==========
-  const stateObj = reactive({ a: 1, nested: { y: 1, deep: { z: 1 } }, list: [1, 2] })
-  const elA = document.getElementById('obj-a')
-  const elY = document.getElementById('obj-y')
-  const elZ = document.getElementById('obj-z')
-  const elList = document.getElementById('obj-list')
-  const elObjCalls = document.getElementById('obj-calls')
-  const elObjOld = document.getElementById('obj-old')
-  const elObjNew = document.getElementById('obj-new')
-  effect(() => {
-    elA.innerText = String(stateObj.a)
-    elY.innerText = String(stateObj.nested.y)
-    elZ.innerText = String(stateObj.nested.deep.z)
-    elList.innerText = JSON.stringify(stateObj.list)
-  })
-  let callsObj = 0
-  let prevSnap = JSON.stringify(stateObj)
-  watch(stateObj, (_nv, _ov) => {
-    callsObj++
-    const nextSnap = JSON.stringify(stateObj)
-    elObjCalls.innerText = String(callsObj)
-    elObjOld.innerText = prevSnap
-    elObjNew.innerText = nextSnap
-    console.log('[watch reactive∞]', { old: prevSnap, new: nextSnap })
-    prevSnap = nextSnap
-  })
-  document.getElementById('btn-obj-a').addEventListener('click', () => {
-    stateObj.a++
-  })
-  document.getElementById('btn-obj-y').addEventListener('click', () => {
-    stateObj.nested.y++
-  })
-  document.getElementById('btn-obj-z').addEventListener('click', () => {
-    stateObj.nested.deep.z++
-  })
-  document.getElementById('btn-obj-push').addEventListener('click', () => {
-    console.warn('这里有bug，响应式系统没有收集到数组长度的变更')
-    stateObj.list.push(Math.floor(Math.random() * 10))
-  })
+      // ========== 2) ref 源 ==========
+      const count = ref(0)
+      const elRefCount = document.getElementById('ref-count')
+      const elRefCalls = document.getElementById('ref-calls')
+      const elRefNew = document.getElementById('ref-new')
+      const elRefOld = document.getElementById('ref-old')
+      effect(() => {
+        elRefCount.innerText = String(count.value)
+      })
+      let callsRef = 0
+      watch(count, (newValue, oldValue) => {
+        callsRef++
+        elRefCalls.innerText = String(callsRef)
+        elRefNew.innerText = String(newValue)
+        elRefOld.innerText = String(oldValue)
+        console.log('[watch ref] nv:', newValue, 'ov:', oldValue)
+      })
+      document.getElementById('btn-ref-inc').addEventListener('click', () => {
+        count.value++
+      })
+      document.getElementById('btn-ref-rand').addEventListener('click', () => {
+        count.value = Math.floor(Math.random() * 100)
+      })
 
-  // ========== 4) reactive 深度验证（deep:1 与 deep:2） ==========
-  const stateDeep = reactive({ l1: { l2: { l3: { n: 1 }, k: 1 } }, another: { x: 1 } })
-  const elN = document.getElementById('d-n')
-  effect(() => {
-    elN.innerText = JSON.stringify(stateDeep)
-  })
+      // ========== 3) reactive 源（无限深） ==========
+      const stateObj = reactive({ a: 1, nested: { y: 1, deep: { z: 1 } }, list: [1, 2] })
+      const elA = document.getElementById('obj-a')
+      const elY = document.getElementById('obj-y')
+      const elZ = document.getElementById('obj-z')
+      const elList = document.getElementById('obj-list')
+      const elObjCalls = document.getElementById('obj-calls')
+      const elObjOld = document.getElementById('obj-old')
+      const elObjNew = document.getElementById('obj-new')
+      effect(() => {
+        elA.innerText = String(stateObj.a)
+        elY.innerText = String(stateObj.nested.y)
+        elZ.innerText = String(stateObj.nested.deep.z)
+        elList.innerText = JSON.stringify(stateObj.list)
+      })
+      let callsObj = 0
+      let prevSnap = JSON.stringify(stateObj)
+      watch(stateObj, (_nv, _ov) => {
+        callsObj++
+        const nextSnap = JSON.stringify(stateObj)
+        elObjCalls.innerText = String(callsObj)
+        elObjOld.innerText = prevSnap
+        elObjNew.innerText = nextSnap
+        console.log('[watch reactive∞]', { old: prevSnap, new: nextSnap })
+        prevSnap = nextSnap
+      })
+      document.getElementById('btn-obj-a').addEventListener('click', () => {
+        stateObj.a++
+      })
+      document.getElementById('btn-obj-y').addEventListener('click', () => {
+        stateObj.nested.y++
+      })
+      document.getElementById('btn-obj-z').addEventListener('click', () => {
+        stateObj.nested.deep.z++
+      })
+      document.getElementById('btn-obj-push').addEventListener('click', () => {
+        console.warn('这里有bug，响应式系统没有收集到数组长度的变更')
+        stateObj.list.push(Math.floor(Math.random() * 10))
+      })
 
-  // deep:1
-  const elD1Calls = document.getElementById('d1-calls')
-  const elD1Old = document.getElementById('d1-old')
-  const elD1New = document.getElementById('d1-new')
-  let callsD1 = 0
-  let prevD1 = JSON.stringify(stateDeep)
-  watch(stateDeep, () => {
-    callsD1++
-    const snap = JSON.stringify(stateDeep)
-    elD1Calls.innerText = String(callsD1)
-    elD1Old.innerText = prevD1
-    elD1New.innerText = snap
-    console.log('[watch deep:1]', { old: prevD1, new: snap })
-    prevD1 = snap
-  }, { deep: 1 })
+      // ========== 4) reactive 深度验证（deep:1 与 deep:2） ==========
+      const stateDeep = reactive({ l1: { l2: { l3: { n: 1 }, k: 1 } }, another: { x: 1 } })
+      const elN = document.getElementById('d-n')
+      effect(() => {
+        elN.innerText = JSON.stringify(stateDeep)
+      })
 
-  // deep:2
-  const elD2Calls = document.getElementById('d2-calls')
-  const elD2Old = document.getElementById('d2-old')
-  const elD2New = document.getElementById('d2-new')
-  let callsD2 = 0
-  let prevD2 = JSON.stringify(stateDeep)
-  watch(stateDeep, () => {
-    callsD2++
-    const snap = JSON.stringify(stateDeep)
-    elD2Calls.innerText = String(callsD2)
-    elD2Old.innerText = prevD2
-    elD2New.innerText = snap
-    console.log('[watch deep:2]', { old: prevD2, new: snap })
-    prevD2 = snap
-  }, { deep: 2 })
+      // deep:1
+      const elD1Calls = document.getElementById('d1-calls')
+      const elD1Old = document.getElementById('d1-old')
+      const elD1New = document.getElementById('d1-new')
+      let callsD1 = 0
+      let prevD1 = JSON.stringify(stateDeep)
+      watch(
+        stateDeep,
+        () => {
+          callsD1++
+          const snap = JSON.stringify(stateDeep)
+          elD1Calls.innerText = String(callsD1)
+          elD1Old.innerText = prevD1
+          elD1New.innerText = snap
+          console.log('[watch deep:1]', { old: prevD1, new: snap })
+          prevD1 = snap
+        },
+        { deep: 1 },
+      )
 
-  // 操作按钮
-  document.getElementById('btn-d-l1-replace').addEventListener('click', () => {
-    stateDeep.l1 = { ...stateDeep.l1, replacedAt: Date.now() }
-  })
-  document.getElementById('btn-d-l2-inc').addEventListener('click', () => {
-    stateDeep.l1.l2.k = (stateDeep.l1.l2.k || 0) + 1
-  })
-  document.getElementById('btn-d-l3-inc').addEventListener('click', () => {
-    stateDeep.l1.l2.l3.n++
-  })
-  document.getElementById('btn-d-another-inc').addEventListener('click', () => {
-    stateDeep.another.x++
-  })
-</script>
-</body>
+      // deep:2
+      const elD2Calls = document.getElementById('d2-calls')
+      const elD2Old = document.getElementById('d2-old')
+      const elD2New = document.getElementById('d2-new')
+      let callsD2 = 0
+      let prevD2 = JSON.stringify(stateDeep)
+      watch(
+        stateDeep,
+        () => {
+          callsD2++
+          const snap = JSON.stringify(stateDeep)
+          elD2Calls.innerText = String(callsD2)
+          elD2Old.innerText = prevD2
+          elD2New.innerText = snap
+          console.log('[watch deep:2]', { old: prevD2, new: snap })
+          prevD2 = snap
+        },
+        { deep: 2 },
+      )
+
+      // 操作按钮
+      document.getElementById('btn-d-l1-replace').addEventListener('click', () => {
+        stateDeep.l1 = { ...stateDeep.l1, replacedAt: Date.now() }
+      })
+      document.getElementById('btn-d-l2-inc').addEventListener('click', () => {
+        stateDeep.l1.l2.k = (stateDeep.l1.l2.k || 0) + 1
+      })
+      document.getElementById('btn-d-l3-inc').addEventListener('click', () => {
+        stateDeep.l1.l2.l3.n++
+      })
+      document.getElementById('btn-d-another-inc').addEventListener('click', () => {
+        stateDeep.another.x++
+      })
+
+      // ========== 5) immediate 参数验证（初次应立即触发，old 为 undefined） ==========
+      const imm = ref(42)
+      const elImmValue = document.getElementById('imm-value')
+      const elImmCalls = document.getElementById('imm-calls')
+      const elImmNew = document.getElementById('imm-new')
+      const elImmOld = document.getElementById('imm-old')
+      effect(() => {
+        elImmValue.innerText = String(imm.value)
+      })
+      let callsImm = 0
+      watch(
+        imm,
+        (newValue, oldValue) => {
+          callsImm++
+          elImmCalls.innerText = String(callsImm)
+          elImmNew.innerText = String(newValue)
+          elImmOld.innerText = String(oldValue)
+          console.log('[watch immediate]', { newValue, oldValue, calls: callsImm })
+        },
+        { immediate: true },
+      )
+      document.getElementById('btn-imm-inc').addEventListener('click', () => {
+        imm.value++
+      })
+    </script>
+  </body>
 </html>

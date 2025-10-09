@@ -17,10 +17,11 @@ export type WatchCallback<V = any, OV = any> = (
 ) => any
 
 /**
- * 相比于官方，我们的仅支持deep
+ * 相比于官方，我们的仅支持deep,immediate
  */
 export interface WatchOptions {
   deep?: false | number
+  immediate?: boolean
 }
 
 /**
@@ -35,7 +36,7 @@ export function watch(source: WatchSource, cb: WatchCallback, options: WatchOpti
   return doWatch(source, cb, options)
 }
 
-export function doWatch(source: WatchSource, cb: WatchCallback, { deep }: WatchOptions) {
+export function doWatch(source: WatchSource, cb: WatchCallback, { deep, immediate }: WatchOptions) {
   // 产生一个可以给ReactiveEffect来使用的getter，需要对这个对象进行取值操作，会关联当前的reactiveEffect
   const reactiveGetter = (_source: object) => traverse(_source, deep === false ? 0 : deep)
   let getter: Function
@@ -49,12 +50,28 @@ export function doWatch(source: WatchSource, cb: WatchCallback, { deep }: WatchO
 
   let oldValue: any
   let newValue: any
-  const effect = new ReactiveEffect(getter, () => {
-    newValue = effect.run()
-    cb(newValue, oldValue)
-    oldValue = newValue
-  })
-  oldValue = effect.run()
+
+  const job = () => {
+    if (isFunction(cb)) {
+      newValue = effect.run()
+      cb(newValue, oldValue)
+      oldValue = newValue
+    } else {
+      effect.run()
+    }
+  }
+  const effect = new ReactiveEffect(getter, job)
+
+  if (isFunction(cb)) {
+    if (immediate) {
+      job()
+    } else {
+      oldValue = effect.run()
+    }
+  } else {
+    // cb 不存在，那就算watchEffect的场景
+    effect.run()
+  }
 }
 
 /**

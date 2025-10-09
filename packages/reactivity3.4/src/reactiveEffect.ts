@@ -50,6 +50,7 @@ export function track(target: object, key: ObJKey) {
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function trigger(target: object, key: ObJKey, value: any, oldVak: any) {
   const depsMap = targetMap.get(target)
   if (!depsMap) {

@@ -75,11 +75,7 @@ commit_message_template:
   - "BREAKING CHANGE: 如有，清晰说明迁移步骤"
 
 tools_and_ops:
-  absolute_paths: true
-  lints_required: true
-  run_after_edit:
-    - "pnpm run lint"
-    - "pnpm run format:check"
+
 
 ask_before_doing:
   - "跨包 API 变更"
