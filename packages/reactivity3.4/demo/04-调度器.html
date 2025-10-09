@@ -1,46 +1,48 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>04-调度器</title>
-</head>
-<body>
-<div id="app"></div>
-<button id="flag">flag=false</button>
-<button id="btn">age=40</button>
-<button id="name">random name</button>
-  <script type="module">
-    import { effect, reactive } from '../dist/reactivity3.4.esm.js'
-    // import { reactive, effect } from '../../../node_modules/vue/dist/vue.esm-browser.prod.js'
+  <head>
+    <meta charset="UTF-8" />
+    <title>04-调度器</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <button id="flag">flag=false</button>
+    <button id="btn">age=40</button>
+    <button id="name">random name</button>
+    <script type="module">
+      import { effect, reactive } from '../dist/reactivity3.4.esm.js'
+      // import { reactive, effect } from '../../../node_modules/vue/dist/vue.esm-browser.prod.js'
 
-    const obj = { name: 'jw', age: 30, flag: true }
-    const state = reactive(obj)
-    const runner = effect(() => {
-      // app.innerHTML = `姓名: ${state.name} 年龄: ${state.age}`
-      app.innerHTML = state.flag ? state.name : state.age
-    }, {
+      const obj = { name: 'jw', age: 30, flag: true }
+      const state = reactive(obj)
+      const runner = effect(
+        () => {
+          // app.innerHTML = `姓名: ${state.name} 年龄: ${state.age}`
+          app.innerHTML = state.flag ? state.name : state.age
+        },
+        {
+          // 自定义调度器
+          scheduler() {
+            // AOP
+            console.log('数据更新了, 不重新渲染, 走自己的逻辑')
+            // 重新渲染
+            runner()
+          },
+        },
+      )
 
-      // 自定义调度器
-      scheduler() {
-        // AOP
-        console.log('数据更新了, 不重新渲染, 走自己的逻辑')
-        // 重新渲染
-        runner()
-      }
-    })
-
-    document.getElementById('btn').addEventListener('click', () => {
-      console.log('改变age')
-      state.age = 40
-    })
-    document.getElementById('flag').addEventListener('click', () => {
-      console.log('改变flag')
-      state.flag = false
-    })
-    document.getElementById('name').addEventListener('click', () => {
-      console.log('随机name')
-      state.name = Math.random()
-    })
-  </script>
-</body>
+      document.getElementById('btn').addEventListener('click', () => {
+        console.log('改变age')
+        state.age = 40
+      })
+      document.getElementById('flag').addEventListener('click', () => {
+        console.log('改变flag')
+        state.flag = false
+      })
+      document.getElementById('name').addEventListener('click', () => {
+        console.log('随机name')
+        state.name = Math.random()
+      })
+    </script>
+  </body>
 </html>

@@ -1,7 +1,7 @@
+---
 #-------------------------------------------------------------------------------#
 #               Qodana analysis is configured by qodana.yaml file               #
 #             https://www.jetbrains.com/help/qodana/qodana-yaml.html
-
 
 #  简述
 #  Qodana 是 JetBrains 的代码质量/静态分析平台，相当于把 IntelliJ/IDEA 的“代码检查器”搬到本地或 CI/CD 里跑，扫描项目的代码问题、样式一致性、安全隐患、死代码等，并可设置“质量门禁”让流水线在不达标时失败。
@@ -22,7 +22,7 @@
 #              WARNING: Do not store sensitive information in this file,        #
 #               as its contents will be included in the Qodana report.          #
 #################################################################################
-version: "1.0"
+version: '1.0'
 
 #Specify inspection profile for code analysis
 profile:

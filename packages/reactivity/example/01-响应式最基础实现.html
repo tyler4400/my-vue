@@ -1,38 +1,42 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>01-响应式最基础实现</title>
-</head>
-<body>
-  <p>依赖1：<span id="count"></span></p>
-  <p>依赖2：<span id="count2"></span></p>
-  <button id="count-btn">count+1</button>
-  <script type="module">
-    import { ref, effect } from '../dist/reactivity.esm.js'
-    // import {
-    //   ref,
-    //   effect,
-    // } from '../../../node_modules/vue/dist/vue.esm-browser.prod.js'
-    const count = ref(0)
+  <head>
+    <meta charset="UTF-8" />
+    <title>01-响应式最基础实现</title>
+  </head>
+  <body>
+    <p>
+      依赖1：
+      <span id="count"></span>
+    </p>
+    <p>
+      依赖2：
+      <span id="count2"></span>
+    </p>
+    <button id="count-btn">count+1</button>
+    <script type="module">
+      import { ref, effect } from '../dist/reactivity.esm.js'
+      // import {
+      //   ref,
+      //   effect,
+      // } from '../../../node_modules/vue/dist/vue.esm-browser.prod.js'
+      const count = ref(0)
 
-    effect(() => {
-      const val  = count.value
-      console.log('1 - count: ', val);
-      document.getElementById('count').innerText = val
-    })
+      effect(() => {
+        const val = count.value
+        console.log('1 - count: ', val)
+        document.getElementById('count').innerText = val
+      })
 
-    effect(() => {
-      const val  = count.value
-      console.log('2 - count: ', val);
-      document.getElementById('count2').innerText = val
-    })
+      effect(() => {
+        const val = count.value
+        console.log('2 - count: ', val)
+        document.getElementById('count2').innerText = val
+      })
 
-    document.getElementById('count-btn').addEventListener('click', () => {
-      count.value = parseInt(document.getElementById('count').innerText) + 1
-    })
-
-
-  </script>
-</body>
+      document.getElementById('count-btn').addEventListener('click', () => {
+        count.value = parseInt(document.getElementById('count').innerText) + 1
+      })
+    </script>
+  </body>
 </html>

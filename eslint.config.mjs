@@ -1,9 +1,9 @@
 // eslint.config.mjs
-import js from '@eslint/js';
-import tseslint from 'typescript-eslint';
-import prettierPlugin from 'eslint-plugin-prettier';
-import eslintConfigPrettier from 'eslint-config-prettier';
-import globals from 'globals';
+import js from '@eslint/js'
+import tseslint from 'typescript-eslint'
+import prettierPlugin from 'eslint-plugin-prettier'
+import eslintConfigPrettier from 'eslint-config-prettier'
+import globals from 'globals'
 
 export default [
   // 忽略项（Flat Config 下推荐在配置里声明）
@@ -16,8 +16,8 @@ export default [
       'coverage/',
       'packages/*/dist/',
       'packages/*/build/',
-      '**/*.min.js'
-    ]
+      '**/*.min.js',
+    ],
   },
 
   // 核心推荐
@@ -25,7 +25,7 @@ export default [
 
   {
     files: ['scripts/**/*.{js,ts}', 'docs/**/*.{js,ts}'],
-    languageOptions: { globals: globals.node }
+    languageOptions: { globals: globals.node },
   },
   // TypeScript 推荐（无类型感知，运行更快；需要类型感知见下方“可选增强”）
   ...tseslint.configs.recommended,
@@ -44,6 +44,6 @@ export default [
       '@typescript-eslint/no-this-alias': 'off',
       '@typescript-eslint/no-explicit-any': 'off',
       // '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }]
-    }
-  }
-];
+    },
+  },
+]

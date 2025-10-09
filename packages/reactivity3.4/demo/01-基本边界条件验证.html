@@ -1,25 +1,24 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>01-基本边界条件验证</title>
-</head>
-<body>
-  <script type="module">
-    import { reactive } from '../dist/reactivity3.4.esm.js'
-    // import {
-    //   ref,
-    //   effect,
-    // } from '../../../node_modules/vue/dist/vue.esm-browser.prod.js'
+  <head>
+    <meta charset="UTF-8" />
+    <title>01-基本边界条件验证</title>
+  </head>
+  <body>
+    <script type="module">
+      import { reactive } from '../dist/reactivity3.4.esm.js'
+      // import {
+      //   ref,
+      //   effect,
+      // } from '../../../node_modules/vue/dist/vue.esm-browser.prod.js'
 
-    const jack = {name: 'jack', age: 18}
-    const state1 = reactive(jack)
-    const state2 = reactive(jack)
-    console.log('相同对象的代理是否相同', state1 === state2);
+      const jack = { name: 'jack', age: 18 }
+      const state1 = reactive(jack)
+      const state2 = reactive(jack)
+      console.log('相同对象的代理是否相同', state1 === state2)
 
-    const state3 = reactive(state2)
-    console.log('把代理重新代理是否一样', state2 === state3)
-
-  </script>
-</body>
+      const state3 = reactive(state2)
+      console.log('把代理重新代理是否一样', state2 === state3)
+    </script>
+  </body>
 </html>

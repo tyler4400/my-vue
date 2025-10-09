@@ -1,32 +1,32 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>07-深度代理</title>
-</head>
-<body>
-<span>jack.lover.age: </span>
-<span id="id"></span>
-<br>
-<button id="btn">lover.age + 1</button>
-<div id="runTimes"></div>
+  <head>
+    <meta charset="UTF-8" />
+    <title>07-深度代理</title>
+  </head>
+  <body>
+    <span>jack.lover.age:</span>
+    <span id="id"></span>
+    <br />
+    <button id="btn">lover.age + 1</button>
+    <div id="runTimes"></div>
 
-<script type="module">
-  import { effect, reactive } from '../dist/reactivity3.4.esm.js'
-  // import { reactive, effect } from '../../../node_modules/vue/dist/vue.esm-browser.prod.js'
+    <script type="module">
+      import { effect, reactive } from '../dist/reactivity3.4.esm.js'
+      // import { reactive, effect } from '../../../node_modules/vue/dist/vue.esm-browser.prod.js'
 
-  const jack = {name: 'jack', age: 18, lover: { age: 20 }}
-  const state = reactive(jack)
+      const jack = { name: 'jack', age: 18, lover: { age: 20 } }
+      const state = reactive(jack)
 
-  let runTimes = 1
-  effect(() => {
-    document.getElementById('runTimes').innerText = '运行了：' + runTimes + '次'
-    document.getElementById('id').innerText = state.lover.age
-  })
+      let runTimes = 1
+      effect(() => {
+        document.getElementById('runTimes').innerText = '运行了：' + runTimes + '次'
+        document.getElementById('id').innerText = state.lover.age
+      })
 
-  document.getElementById('btn').addEventListener('click', () => {
-    state.lover.age++
-  })
-</script>
-</body>
+      document.getElementById('btn').addEventListener('click', () => {
+        state.lover.age++
+      })
+    </script>
+  </body>
 </html>

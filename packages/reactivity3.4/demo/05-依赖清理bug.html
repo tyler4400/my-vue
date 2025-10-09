@@ -1,72 +1,95 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>05-依赖清理bug 验证（顺序交换）</title>
-  <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif; }
-    button { margin-right: 8px; }
-    code { background: #f6f8fa; padding: 2px 6px; border-radius: 4px; }
-  </style>
-  <!-- 说明：
+  <head>
+    <meta charset="UTF-8" />
+    <title>05-依赖清理bug 验证（顺序交换）</title>
+    <style>
+      body {
+        font-family:
+          -apple-system,
+          BlinkMacSystemFont,
+          Segoe UI,
+          Roboto,
+          Oxygen,
+          Ubuntu,
+          Cantarell,
+          'Fira Sans',
+          'Droid Sans',
+          'Helvetica Neue',
+          sans-serif;
+      }
+      button {
+        margin-right: 8px;
+      }
+      code {
+        background: #f6f8fa;
+        padding: 2px 6px;
+        border-radius: 4px;
+      }
+    </style>
+    <!-- 说明：
     该用例用于验证依赖访问顺序在两轮之间发生交换时是否会误删订阅。
     修复前：旧 [A, B] → 新 [B, A] 时，可能导致 B 的订阅被误删，后续对 B 的变更不会再触发 effect。
     修复后：两者都应持续触发。
-  -->
-</head>
-<body>
-<p>
-  a: <span id="a"></span>，
-  b: <span id="b"></span>，
-  flag: <span id="flag"></span>，
-  effect次数: <span id="times"></span>
-</p>
+  --></head>
+  <body>
+    <p>
+      a:
+      <span id="a"></span>
+      ， b:
+      <span id="b"></span>
+      ， flag:
+      <span id="flag"></span>
+      ， effect次数:
+      <span id="times"></span>
+    </p>
 
+    <button id="toggle">切换顺序 (a↔b)</button>
+    <button id="inc-a">a+1</button>
+    <button id="inc-b">b+1</button>
 
-<button id="toggle">切换顺序 (a↔b)</button>
-<button id="inc-a">a+1</button>
-<button id="inc-b">b+1</button>
+    <code style="display: block; margin-top: 20px">
+      用法与验证要点：
+      <br />
+      初始 effect 依赖顺序为 a → b（flag=true），点击“切换顺序”后变为 b → a。
+      <br />
+      之后点击 “a+1” 和 “b+1”，两者都应继续触发 effect，控制台会打印访问顺序与次数。
+      <br />
+      若回退修复前逻辑（理论对照），切换顺序后通常会出现某个键不再触发 effect 的问题。
+      <br />
+    </code>
 
-<code style="display: block; margin-top: 20px">
-  用法与验证要点：<br/>
-  初始 effect 依赖顺序为 a → b（flag=true），点击“切换顺序”后变为 b → a。<br/>
-  之后点击 “a+1” 和 “b+1”，两者都应继续触发 effect，控制台会打印访问顺序与次数。<br/>
-  若回退修复前逻辑（理论对照），切换顺序后通常会出现某个键不再触发 effect 的问题。<br/>
-</code>
+    <script type="module">
+      import { reactive, effect } from '../dist/reactivity3.4.esm.js'
 
-<script type="module">
-  import { reactive, effect } from '../dist/reactivity3.4.esm.js'
+      let runTimes = 0
+      const state = reactive({ a: 1, b: 1, flag: true })
 
-  let runTimes = 0
-  const state = reactive({ a: 1, b: 1, flag: true })
+      effect(() => {
+        runTimes++
+        const k1 = state.flag ? 'a' : 'b'
+        const k2 = state.flag ? 'b' : 'a'
 
-  effect(() => {
-    runTimes++
-    const k1 = state.flag ? 'a' : 'b'
-    const k2 = state.flag ? 'b' : 'a'
+        const v1 = state[k1]
+        const v2 = state[k2]
 
-    const v1 = state[k1]
-    const v2 = state[k2]
+        document.getElementById('a').innerText = String(state.a)
+        document.getElementById('b').innerText = String(state.b)
+        document.getElementById('flag').innerText = String(state.flag)
+        document.getElementById('times').innerText = String(runTimes)
 
-    document.getElementById('a').innerText = String(state.a)
-    document.getElementById('b').innerText = String(state.b)
-    document.getElementById('flag').innerText = String(state.flag)
-    document.getElementById('times').innerText = String(runTimes)
+        console.log(`[effect#${runTimes}] 顺序: ${k1} -> ${k2}; 值: ${k1}=${v1}, ${k2}=${v2}`)
+      })
 
-    console.log(`[effect#${runTimes}] 顺序: ${k1} -> ${k2}; 值: ${k1}=${v1}, ${k2}=${v2}`)
-  })
-
-  document.getElementById('toggle').addEventListener('click', () => {
-    state.flag = !state.flag
-  })
-  document.getElementById('inc-a').addEventListener('click', () => {
-    state.a++
-  })
-  document.getElementById('inc-b').addEventListener('click', () => {
-    state.b++
-  })
-</script>
-</body>
+      document.getElementById('toggle').addEventListener('click', () => {
+        state.flag = !state.flag
+      })
+      document.getElementById('inc-a').addEventListener('click', () => {
+        state.a++
+      })
+      document.getElementById('inc-b').addEventListener('click', () => {
+        state.b++
+      })
+    </script>
+  </body>
 </html>
-
-

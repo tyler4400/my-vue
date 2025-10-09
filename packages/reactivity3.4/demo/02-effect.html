@@ -1,39 +1,47 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>02-effect</title>
-</head>
-<body>
-<p>姓名：<span id="name1"></span>， 年龄： <span id="age"></span></p>
-<p>姓名：<span id="name2"></span></p>
-<button id="count">age+1</button>
+  <head>
+    <meta charset="UTF-8" />
+    <title>02-effect</title>
+  </head>
+  <body>
+    <p>
+      姓名：
+      <span id="name1"></span>
+      ， 年龄：
+      <span id="age"></span>
+    </p>
+    <p>
+      姓名：
+      <span id="name2"></span>
+    </p>
+    <button id="count">age+1</button>
 
-  <script type="module">
-    import { effect, reactive } from '../dist/reactivity3.4.esm.js'
-    // import {
-    //   reactive,
-    //   effect,
-    // } from '../../../node_modules/vue/dist/vue.esm-browser.prod.js'
+    <script type="module">
+      import { effect, reactive } from '../dist/reactivity3.4.esm.js'
+      // import {
+      //   reactive,
+      //   effect,
+      // } from '../../../node_modules/vue/dist/vue.esm-browser.prod.js'
 
-    const jack = {name: 'jack', age: 18}
-    const state = reactive(jack)
+      const jack = { name: 'jack', age: 18 }
+      const state = reactive(jack)
 
-    effect(() => {
-      const name1 = state.name
-      const age = state.age
-      document.getElementById('name1').innerText = name1
-      document.getElementById('age').innerText = age
-    })
+      effect(() => {
+        const name1 = state.name
+        const age = state.age
+        document.getElementById('name1').innerText = name1
+        document.getElementById('age').innerText = age
+      })
 
-    effect(() => {
-      const name2 = state.name
-      document.getElementById('name2').innerText = name2
-    })
+      effect(() => {
+        const name2 = state.name
+        document.getElementById('name2').innerText = name2
+      })
 
-    document.getElementById('count').addEventListener('click', () => {
-      state.name = 'rose'
-    })
-  </script>
-</body>
+      document.getElementById('count').addEventListener('click', () => {
+        state.name = 'rose'
+      })
+    </script>
+  </body>
 </html>
