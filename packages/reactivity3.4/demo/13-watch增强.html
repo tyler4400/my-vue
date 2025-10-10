@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <title>13-watch增强（unwatch 与 onCleanup）</title>
+    <style>
+      img {
+        max-width: 240px;
+        display: block;
+        margin-top: 6px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+      }
+      .card {
+        border: 1px solid #ddd;
+        padding: 12px;
+        border-radius: 8px;
+      }
+      .muted {
+        color: #666;
+        font-size: 12px;
+      }
+      button {
+        margin-right: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>验证1：unwatch 停止监听</h2>
+    <div class="card">
+      <div>
+        n:
+        <span id="un-n">0</span>
+      </div>
+      <div>
+        触发次数:
+        <span id="un-calls">0</span>
+      </div>
+      <button id="btn-un-inc">n + 1</button>
+      <button id="btn-un-stop">停止 watch（unwatch）</button>
+      <div class="muted">点击“停止 watch”后，再点击“n + 1”，上方“触发次数”不再增长。</div>
+    </div>
+
+    <h2>验证2：onCleanup 清理并发请求（与未清理对比）</h2>
+    <div class="grid">
+      <div class="card">
+        <h3>未使用 cleanup（可能出现旧请求覆盖新请求）</h3>
+        <div>
+          次数:
+          <span id="nc-calls">0</span>
+        </div>
+        <button id="btn-nc">请求新图片（不清理）</button>
+        <div class="muted">快速多次点击，可能看到“结果不是最后一次请求”。</div>
+        <div id="nc-status" class="muted">状态：空闲</div>
+        <img id="nc-img" alt="no-cleanup" />
+      </div>
+      <div class="card">
+        <h3>使用 onCleanup + AbortController（旧请求被中断）</h3>
+        <div>
+          次数:
+          <span id="c-calls">0</span>
+        </div>
+        <button id="btn-c">请求新图片（带清理）</button>
+        <div class="muted">快速多次点击，只有最后一次请求会生效。</div>
+        <div id="c-status" class="muted">状态：空闲</div>
+        <img id="c-img" alt="with-cleanup" />
+      </div>
+    </div>
+
+    <script type="module">
+      import { reactive, watch } from '../dist/reactivity3.4.esm.js'
+      // 如需对照 Vue 行为，可切换到下行导入：
+      // import { reactive, watch } from '../../../node_modules/vue/dist/vue.esm-browser.prod.js'
+
+      const sleep = ms => new Promise(resolve => setTimeout(resolve, ms))
+      const DOG_API = 'https://dog.ceo/api/breeds/image/random'
+
+      // ========== 验证1：unwatch 停止监听 ==========
+      const stateUn = reactive({ n: 0 })
+      const elUnN = document.getElementById('un-n')
+      const elUnCalls = document.getElementById('un-calls')
+      let unCalls = 0
+      const stopUn = watch(
+        () => stateUn.n,
+        newValue => {
+          unCalls++
+          elUnN.innerText = String(newValue)
+          elUnCalls.innerText = String(unCalls)
+          console.log('[unwatch demo] update n ->', newValue)
+        },
+      )
+      document.getElementById('btn-un-inc').addEventListener('click', () => {
+        stateUn.n++
+      })
+      document.getElementById('btn-un-stop').addEventListener('click', () => {
+        stopUn()
+      })
+
+      // ========== 验证2：并发请求对比 ==========
+      // 未清理版本：不使用 onCleanup，可能发生旧请求覆盖新请求
+      const stateNoCleanup = reactive({ tick: 0 })
+      const elNcCalls = document.getElementById('nc-calls')
+      const elNcStatus = document.getElementById('nc-status')
+      const elNcImg = document.getElementById('nc-img')
+      let ncCalls = 0
+      watch(
+        () => stateNoCleanup.tick,
+        async newValue => {
+          ncCalls++
+          elNcCalls.innerText = String(ncCalls)
+          elNcStatus.innerText = `状态：请求中（tick=${newValue}）`
+          try {
+            const res = await fetch(DOG_API)
+            const data = await res.json()
+            // 引入随机延时，放大并发响应乱序的概率
+            await sleep(200 + Math.floor(Math.random() * 2200))
+            elNcImg.src = data.message
+            elNcStatus.innerText = `状态：完成（tick=${newValue}）`
+          } catch (e) {
+            elNcStatus.innerText = `状态：失败（tick=${newValue}）`
+            console.warn('[no-cleanup] error:', e)
+          }
+        },
+      )
+      document.getElementById('btn-nc').addEventListener('click', () => {
+        stateNoCleanup.tick++
+      })
+
+      // 使用 onCleanup：在新一轮触发前中断上一次未完成请求
+      const stateCleanup = reactive({ tick: 0 })
+      const elCCalls = document.getElementById('c-calls')
+      const elCStatus = document.getElementById('c-status')
+      const elCImg = document.getElementById('c-img')
+      let cCalls = 0
+      watch(
+        () => stateCleanup.tick,
+        async (newValue, _oldValue, onCleanup) => {
+          cCalls++
+          elCCalls.innerText = String(cCalls)
+          elCStatus.innerText = `状态：请求中（tick=${newValue}）`
+
+          const controller = new AbortController()
+          onCleanup(() => controller.abort())
+
+          try {
+            const res = await fetch(DOG_API, { signal: controller.signal })
+            const data = await res.json()
+            // 同样加入随机延时
+            await sleep(200 + Math.floor(Math.random() * 2200))
+            // 若已被中断则不再更新（双保险）
+            if (controller.signal.aborted) return
+            elCImg.src = data.message
+            elCStatus.innerText = `状态：完成（tick=${newValue}）`
+          } catch (e) {
+            if (e && e.name === 'AbortError') {
+              elCStatus.innerText = `状态：已中断（tick=${newValue}）`
+            } else {
+              elCStatus.innerText = `状态：失败（tick=${newValue}）`
+              console.warn('[with-cleanup] error:', e)
+            }
+          }
+        },
+      )
+      document.getElementById('btn-c').addEventListener('click', () => {
+        stateCleanup.tick++
+      })
+    </script>
+  </body>
+</html>

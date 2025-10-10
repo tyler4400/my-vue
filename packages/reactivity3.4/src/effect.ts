@@ -94,7 +94,7 @@ export class ReactiveEffect {
     public scheduler?: Scheduler,
   ) {}
 
-  run() {
+  public run() {
     // 每次运行后effect变为 no_dirty
     this.dirty = false
 
@@ -115,8 +115,12 @@ export class ReactiveEffect {
     }
   }
 
-  stop() {
-    this.active = false
+  public stop() {
+    if (this.active) {
+      this.active = false
+      preCleanEffect(this)
+      postCleanEffect(this)
+    }
   }
 }
 

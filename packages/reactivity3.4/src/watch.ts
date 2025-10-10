@@ -10,11 +10,8 @@ import { isReactive } from './reactive'
  */
 export type WatchSource = RefImpl | ComputedRefImp<any> | Function
 
-export type WatchCallback<V = any, OV = any> = (
-  value: V,
-  oldValue: OV,
-  // onCleanup: OnCleanup,
-) => any
+export type WatchCallback<V = any, OV = any> = (value: V, oldValue: OV, onCleanup: OnCleanup) => any
+export type OnCleanup = (cleanupFn: () => void) => void
 
 /**
  * 相比于官方，我们的仅支持deep,immediate
@@ -24,6 +21,8 @@ export interface WatchOptions {
   immediate?: boolean
 }
 
+export type WatchStopHandle = () => void
+
 /**
  * watch的原理其实很简单，就是利用new了一个ReactiveEffect
  * 把source封装成fn作为第一个参数，cb是第一个。
@@ -32,7 +31,7 @@ export interface WatchOptions {
  * @param cb
  * @param options
  */
-export function watch(source: WatchSource, cb: WatchCallback, options: WatchOptions = {}) {
+export function watch(source: WatchSource, cb: WatchCallback, options: WatchOptions = {}): WatchStopHandle {
   return doWatch(source, cb, options)
 }
 
@@ -47,7 +46,11 @@ export function watchEffect(effect: WatchEffect) {
   return doWatch(effect)
 }
 
-export function doWatch(source: WatchSource, cb: WatchCallback = null, { deep, immediate }: WatchOptions = {}) {
+export function doWatch(
+  source: WatchSource,
+  cb: WatchCallback = null,
+  { deep, immediate }: WatchOptions = {},
+): WatchStopHandle {
   // 产生一个可以给ReactiveEffect来使用的getter，需要对这个对象进行取值操作，会关联当前的reactiveEffect
   const reactiveGetter = (_source: object) => traverse(_source, deep === false ? 0 : deep)
   let getter: Function
@@ -59,13 +62,25 @@ export function doWatch(source: WatchSource, cb: WatchCallback = null, { deep, i
     getter = source as Function
   }
 
+  let clean: () => void
+  const onCleanup: OnCleanup = (cleanup: () => void) => {
+    clean = () => {
+      cleanup()
+      clean = undefined
+    }
+  }
+
   let oldValue: any
   let newValue: any
 
   const job = () => {
     if (isFunction(cb)) {
       newValue = effect.run()
-      cb(newValue, oldValue)
+
+      // 在执行回调前，先调用上一次的清理操作进行清理
+      clean?.()
+
+      cb(newValue, oldValue, onCleanup)
       oldValue = newValue
     } else {
       effect.run()
@@ -83,6 +98,9 @@ export function doWatch(source: WatchSource, cb: WatchCallback = null, { deep, i
     // cb 不存在，那就算watchEffect的场景
     effect.run()
   }
+
+  const unWatch = () => effect.stop()
+  return unWatch
 }
 
 /**
