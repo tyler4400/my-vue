@@ -1,0 +1,31 @@
+{
+  "name": "@vue/runtime-dom",
+  "version": "1.0.0",
+  "description": "仿写vue3.4的runtime-dom",
+  "main": "dist/runtime-dom.cjs.js",
+  "module": "dist/runtime-dom.esm.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/runtime-dom.esm.js",
+      "require": "./dist/runtime-dom.cjs.js"
+    }
+  },
+  "files": [
+    "index.js",
+    "dist"
+  ],
+  "sideEffects": false,
+  "buildOptions": {
+    "name": "runtimeDom",
+    "formats": [
+      "esm-bundler",
+      "esm-browser",
+      "cjs",
+      "global"
+    ]
+  },
+  "dependencies": {
+    "@vue/shared": "workspace:^"
+  }
+}

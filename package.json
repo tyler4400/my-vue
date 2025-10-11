@@ -7,7 +7,7 @@
   "scripts": {
     "dev:reactivity": "node scripts/dev.js reactivity --format esm",
     "dev:reactivity3.4": "node scripts/dev.js reactivity3.4 --format esm",
-    "dev:reactivity-example": "node scripts/dev.js reactivity-example --format esm",
+    "dev:runtime-dom": "node scripts/dev.js runtime-dom --format esm",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint . --ext .ts,.tsx,.js,.jsx",

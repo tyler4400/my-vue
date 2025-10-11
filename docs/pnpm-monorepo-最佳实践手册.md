@@ -152,6 +152,9 @@ JSON
 
 3) 互相依赖（使用 workspace 协议）
 
+> 例如给`@vue/runtime-dome`子包安装本地的`@vue/shared`依赖 （别忘了`--workspace`参数）：pnpm --filter @vue/runtime-dom add @vue/shared --workspace
+
+
 ```json
 {
   "dependencies": {
