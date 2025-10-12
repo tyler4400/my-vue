@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>insertBefore() 方法</title>
+</head>
+<body>
+<div id="parentElement">
+  <p id="childElement">已存在的子节点</p>
+</div>
+
+<script>
+  /**
+   * Node 接口的 insertBefore() 方法是将一个节点插入到指定父节点的子节点中，并位于参考节点之前。
+   *
+   * 如果给定的节点已经存在于文档中，insertBefore() 会将其从当前位置移动到新位置。（也就是说，它会在附加到指定的新父节点之前自动从现有的父节点中移除。）
+   *
+   * 这意味着一个节点不能同时存在于文档的两个位置。
+   *
+   * 参数：
+   * @newNode 要插入的节点。
+   * @referenceNode 在其之前插入 newNode 的节点。如果为 null，newNode 将被插入到节点的子节点列表末尾。
+   * @return 返回添加的子节点
+   */
+
+  // 创建要插入的新节点
+  const newNode = document.createElement("span");
+  newNode.innerHTML = '新插入的节点'
+
+  // 获取父节点的引用
+  const parentDiv = document.getElementById("childElement").parentNode;
+
+  // 开始测试用例 [ 1 ]：存在 childElement（全部正常运行）
+  let sp2 = document.getElementById("childElement");
+  parentDiv.insertBefore(newNode, sp2);
+  // 结束测试用例 [ 1 ]
+
+  // sp2已经存在，先将其移除，再添加到newNode的上面
+  parentDiv.insertBefore(sp2, newNode);
+
+</script>
+</body>
+</html>

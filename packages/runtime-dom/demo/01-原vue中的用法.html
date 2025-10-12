@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>01-原vue中的用法</title>
+</head>
+<body>
+<div id="app"></div>
+<div id="custom"></div>
+<script type="module">
+  // 1 createRenderer 可以自己创建渲染器 (让我们自己提供渲染的方式)
+  // 2 render 用内置的渲染器进行渲染（渲染dom元素的）
+  // 3 h方法创建一个虚拟dom （type，propsOrChildren,children）
+  import { createRenderer, render, h } from "../../../node_modules/vue/dist/vue.runtime.esm-browser.js";
+
+  // 1. 使用vue的渲染器
+  let vnode = h('h1', 'hello runtime-dom')
+  render(vnode, document.getElementById('app'))
+
+  // 2. 也可以自己创建个渲染器，用这个渲染器渲染
+  const renderer = createRenderer({
+    createElement (type) {
+      // 需要调用对应的api来渲染，当然你也可以使用canvas等其他方式
+      return document.createElement(type)
+    },
+    setElementText(node, text) {
+      node.textContent = text;
+    },
+    insert(node, container) {
+      container.appendChild(node)
+    }
+  })
+  renderer.render(h('h1', '自定义渲染器'), document.getElementById('custom'))
+
+
+  /**
+   * 我们接下来要实现的
+   * runtime-dom其实就是最终的vue包， 都在runtime-dom中导出的
+   *
+   * runtime-dom 它的作用就是提供DOM API
+   * runtime-dom -> runtime-core -> reactivity
+   */
+
+</script>
+</body>
+</html>
