@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>02-renderOptions对比</title>
+  <style>
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; }
+    #controls { padding: 12px; border-bottom: 1px solid #e5e7eb; position: sticky; top: 0; background: #fff; }
+    #controls button { margin-right: 8px; padding: 6px 10px; border: 1px solid #d1d5db; background: #f9fafb; border-radius: 6px; cursor: pointer; }
+    #controls button:focus { outline: 2px solid #2563eb; outline-offset: 2px; }
+    #app, #custom {
+      display: inline-block;
+      width: 48%;
+      box-sizing: border-box;
+      vertical-align: top;
+      min-height: 160px;
+      border: 1px solid #e5e7eb;
+      padding: 10px;
+      margin: 10px 1%;
+      background: #ffffff;
+    }
+    #app::before, #custom::before { display: block; font-weight: 600; color: #374151; margin-bottom: 8px; }
+    #app::before { content: '官方 render'; }
+    #custom::before { content: '自定义 renderOptions'; }
+  </style>
+</head>
+<body>
+<div id="controls" role="toolbar" aria-label="阶段切换">
+  <button id="btn1" type="button" aria-label="切换到阶段一">阶段 1</button>
+  <button id="btn2" type="button" aria-label="切换到阶段二">阶段 2</button>
+  <button id="btn3" type="button" aria-label="切换到阶段三">阶段 3</button>
+  <span style="margin-left:12px;color:#6b7280;">点击下方渲染区根节点可测试 onClick 换绑/解绑</span>
+</div>
+<div id="app"></div>
+<div id="custom"></div>
+<script type="module">
+  import { createRenderer, render, h, Text, Comment } from "../../../node_modules/vue/dist/vue.runtime.esm-browser.js";
+  import { renderOptions } from '../dist/runtime-dom.esm.js'
+  
+  // 创建自定义渲染器
+  const customRenderer = createRenderer(renderOptions)
+  const renderCustom = customRenderer.render
+  
+  const $app = document.getElementById('app')
+  const $custom = document.getElementById('custom')
+  
+  // 三阶段 vnode 工厂：覆盖 class/style/event/attr/text/comment/列表重排
+  const createView = (phase) => {
+    const rootClass = phase === 1 ? 'wrap a' : phase === 2 ? 'wrap b' : ''
+    const rootStyle = phase === 1
+      ? { padding: '12px', border: '2px dashed #999', color: '#1f2937' }
+      : phase === 2
+      ? { padding: '12px', color: '#be185d' } // 删除 border
+      : { padding: '4px', background: '#f9fafb' } // 删除 color，新增 background
+    const rootAttrs = {
+      id: 'root',
+      title: phase === 1 ? 'tip' : null, // phase2 起删除 title
+      'data-test': 'yes',
+      'data-new': phase === 3 ? 'added' : null,
+    }
+    const onClick = phase === 1
+      ? () => console.log('root click: A')
+      : phase === 2
+      ? () => console.log('root click: B')
+      : null // phase3 解绑
+  
+    const listChildren = phase === 1
+      ? [] // 第一阶段无列表，便于观察从纯文本到数组 children 的切换
+      : phase === 2
+      ? [
+          h('li', { key: 'c' }, 'C'),
+          h('li', { key: 'a' }, 'A'),
+          h('li', { key: 'd' }, 'D'),
+        ] // 初始：C-A-D
+      : [
+          h('li', { key: 'a' }, 'A'),
+          h('li', { key: 'd' }, 'D'),
+        ] // 二到三：删除 C，仅 A-D，触发 remove/重排
+  
+    // 根 children：phase1 纯文本（setElementText） -> phase2/3 数组（包含 Text/Comment/元素），Text 文本在 phase3 改变触发 setText
+    const rootChildren = phase === 1
+      ? 'Phase 1：根是纯文本（setElementText）'
+      : [
+          h(Text, phase === 2 ? '显式 Text 节点（V2）' : '显式 Text 节点（V3，setText 更新）'),
+          h('p', { class: phase === 2 ? 'p2' : 'p3', style: { color: phase === 2 ? 'purple' : '#111827' } }, phase === 2 ? '段落二' : '段落三'),
+          h(Comment, '这是注释节点（createComment）'),
+          h('ul', { class: 'list' }, listChildren),
+        ]
+  
+    return h('section', { class: rootClass, style: rootStyle, ...rootAttrs, onClick }, rootChildren)
+  }
+  
+  const renderPhase = (phase) => {
+    const vnode = createView(phase)
+    render(vnode, $app)        // 官方渲染器
+    renderCustom(vnode, $custom) // 自定义渲染器
+  }
+  
+  // 绑定按钮事件
+  document.getElementById('btn1').addEventListener('click', () => renderPhase(1))
+  document.getElementById('btn2').addEventListener('click', () => renderPhase(2))
+  document.getElementById('btn3').addEventListener('click', () => renderPhase(3))
+  
+  // 默认展示第一阶段
+  renderPhase(1)
+</script>
+</body>
+</html>
