@@ -34,8 +34,8 @@ export default function patchEvent(
   } else {
     if (existingInvokers) {
       // 现在没有，以前有. 说明 新的事件不存在，之前存在事件，要解绑
-      el.removeEventListener(eventName, existingInvokers);
-      invokers[name] = undefined;
+      el.removeEventListener(eventName, existingInvokers)
+      invokers[name] = undefined
     }
   }
 }

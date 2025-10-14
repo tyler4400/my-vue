@@ -44,56 +44,69 @@
   const $app = document.getElementById('app')
   const $custom = document.getElementById('custom')
   
-  // 三阶段 vnode 工厂：覆盖 class/style/event/attr/text/comment/列表重排
-  const createView = (phase) => {
-    const rootClass = phase === 1 ? 'wrap a' : phase === 2 ? 'wrap b' : ''
-    const rootStyle = phase === 1
-      ? { padding: '12px', border: '2px dashed #999', color: '#1f2937' }
-      : phase === 2
-      ? { padding: '12px', color: '#be185d' } // 删除 border
-      : { padding: '4px', background: '#f9fafb' } // 删除 color，新增 background
-    const rootAttrs = {
-      id: 'root',
-      title: phase === 1 ? 'tip' : null, // phase2 起删除 title
-      'data-test': 'yes',
-      'data-new': phase === 3 ? 'added' : null,
-    }
-    const onClick = phase === 1
-      ? () => console.log('root click: A')
-      : phase === 2
-      ? () => console.log('root click: B')
-      : null // phase3 解绑
-  
-    const listChildren = phase === 1
-      ? [] // 第一阶段无列表，便于观察从纯文本到数组 children 的切换
-      : phase === 2
-      ? [
-          h('li', { key: 'c' }, 'C'),
-          h('li', { key: 'a' }, 'A'),
-          h('li', { key: 'd' }, 'D'),
-        ] // 初始：C-A-D
-      : [
-          h('li', { key: 'a' }, 'A'),
-          h('li', { key: 'd' }, 'D'),
-        ] // 二到三：删除 C，仅 A-D，触发 remove/重排
-  
-    // 根 children：phase1 纯文本（setElementText） -> phase2/3 数组（包含 Text/Comment/元素），Text 文本在 phase3 改变触发 setText
-    const rootChildren = phase === 1
-      ? 'Phase 1：根是纯文本（setElementText）'
-      : [
-          h(Text, phase === 2 ? '显式 Text 节点（V2）' : '显式 Text 节点（V3，setText 更新）'),
-          h('p', { class: phase === 2 ? 'p2' : 'p3', style: { color: phase === 2 ? 'purple' : '#111827' } }, phase === 2 ? '段落二' : '段落三'),
-          h(Comment, '这是注释节点（createComment）'),
-          h('ul', { class: 'list' }, listChildren),
-        ]
-  
+  // 分阶段视图：每个阶段独立定义，避免混合条件
+  const createViewPhase1 = () => {
+    const rootClass = 'wrap a'
+    const rootStyle = { padding: '12px', border: '2px dashed #999', color: '#1f2937' }
+    const rootAttrs = { id: 'root', title: 'tip', 'data-test': 'yes' }
+    const onClick = () => console.log('root click: A')
+    const rootChildren = 'Phase 1：根是纯文本（setElementText）'
+    return h('section', { class: rootClass, style: rootStyle, ...rootAttrs, onClick }, rootChildren)
+  }
+
+  const createViewPhase2 = () => {
+    const rootClass = 'wrap b'
+    const rootStyle = { padding: '12px', color: '#be185d' } // 删除 border
+    const rootAttrs = { id: 'root', title: null, 'data-test': 'yes' } // 删除 title
+    const onClick = () => console.log('root click: B')
+    const listChildren = [
+      h('li', { key: 'c' }, 'C'),
+      h('li', { key: 'a' }, 'A'),
+      h('li', { key: 'd' }, 'D'),
+    ]
+    const rootChildren = [
+      h(Text, '显式 Text 节点（V2）'),
+      h('p', { class: 'p2', style: { color: 'purple' } }, '段落二'),
+      h(Comment, '这是注释节点（createComment）'),
+      h('ul', { class: 'list' }, listChildren),
+    ]
+    return h('section', { class: rootClass, style: rootStyle, ...rootAttrs, onClick }, rootChildren)
+  }
+
+  const createViewPhase3 = () => {
+    const rootClass = ''
+    const rootStyle = { padding: '4px', background: '#f9fafb' } // 删除 color，新增 background
+    const rootAttrs = { id: 'root', title: null, 'data-test': 'yes', 'data-new': 'added' }
+    const onClick = null // 解绑事件
+    const listChildren = [
+      h('li', { key: 'a' }, 'A'),
+      h('li', { key: 'd' }, 'D'),
+    ]
+    const rootChildren = [
+      h(Text, '显式 Text 节点（V3，setText 更新）'),
+      h('p', { class: 'p3', style: { color: '#111827' } }, '段落三'),
+      h(Comment, '这是注释节点（createComment）'),
+      h('ul', { class: 'list' }, listChildren),
+    ]
     return h('section', { class: rootClass, style: rootStyle, ...rootAttrs, onClick }, rootChildren)
   }
   
   const renderPhase = (phase) => {
-    const vnode = createView(phase)
-    render(vnode, $app)        // 官方渲染器
-    renderCustom(vnode, $custom) // 自定义渲染器
+    // 注意：同一个 vnode 不能被用于两个容器/渲染器，否则会导致 DOM 被移动、事件重复等问题
+    let vnodeForApp
+    let vnodeForCustom
+    if (phase === 1) {
+      vnodeForApp = createViewPhase1()
+      vnodeForCustom = createViewPhase1()
+    } else if (phase === 2) {
+      vnodeForApp = createViewPhase2()
+      vnodeForCustom = createViewPhase2()
+    } else {
+      vnodeForApp = createViewPhase3()
+      vnodeForCustom = createViewPhase3()
+    }
+    render(vnodeForApp, $app)          // 官方渲染器
+    renderCustom(vnodeForCustom, $custom) // 自定义渲染器
   }
   
   // 绑定按钮事件
