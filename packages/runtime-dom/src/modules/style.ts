@@ -1,4 +1,4 @@
-import { HostElement } from '../types'
+import { HostElement } from '@vue/runtime-core'
 import { isString } from '@vue/shared'
 
 type Style = string | Record<string, string | string[]> | null

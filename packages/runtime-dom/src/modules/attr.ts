@@ -1,4 +1,4 @@
-import { HostElement } from '../types'
+import { HostElement } from '@vue/runtime-core'
 
 export const patchAttr = (el: HostElement, key: string, value: any) => {
   if (value) {

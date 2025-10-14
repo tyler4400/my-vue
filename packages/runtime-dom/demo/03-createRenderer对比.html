@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>03-createRenderer对比</title>
+  <style>
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; }
+    #controls { padding: 12px; border-bottom: 1px solid #e5e7eb; position: sticky; top: 0; background: #fff; }
+    #controls button { margin-right: 8px; padding: 6px 10px; border: 1px solid #d1d5db; background: #f9fafb; border-radius: 6px; cursor: pointer; }
+    #controls button:focus { outline: 2px solid #2563eb; outline-offset: 2px; }
+    #app, #custom {
+      display: inline-block;
+      width: 48%;
+      box-sizing: border-box;
+      vertical-align: top;
+      min-height: 160px;
+      border: 1px solid #e5e7eb;
+      padding: 10px;
+      margin: 10px 1%;
+      background: #ffffff;
+    }
+    #app::before, #custom::before { display: block; font-weight: 600; color: #374151; margin-bottom: 8px; }
+    #app::before { content: '官方 render'; }
+    #custom::before { content: '自定义 renderOptions'; }
+  </style>
+</head>
+<body>
+<div id="controls" role="toolbar" aria-label="阶段切换">
+  <button id="btn1" type="button" aria-label="切换到阶段一">阶段 1</button>
+  <button id="btn2" type="button" aria-label="切换到阶段二">阶段 2</button>
+  <button id="btn3" type="button" aria-label="切换到阶段三">阶段 3</button>
+  <span style="margin-left:12px;color:#6b7280;">点击下方渲染区根节点可测试 onClick 换绑/解绑</span>
+</div>
+<div id="app"></div>
+<div id="custom"></div>
+<script type="module">
+  import { render, h, Text, Comment } from "../../../node_modules/vue/dist/vue.runtime.esm-browser.js";
+  import { render as renderCustom } from '../dist/runtime-dom.esm.js'
+
+  const $app = document.getElementById('app')
+  const $custom = document.getElementById('custom')
+
+  // 分阶段视图：每个阶段独立定义，避免混合条件
+  const createViewPhase1 = () => {
+    const rootClass = 'wrap a'
+    const rootStyle = { padding: '12px', border: '2px dashed #999', color: '#1f2937' }
+    const rootAttrs = { id: 'root', title: 'tip', 'data-test': 'yes' }
+    const onClick = () => console.log('root click: A')
+    const rootChildren = [h('p', 'hello'), h('p', 'world')]
+    return h('section', { class: rootClass, style: rootStyle, ...rootAttrs, onClick }, rootChildren)
+  }
+
+  const createViewPhase2 = () => {
+    const rootClass = 'wrap b'
+    const rootStyle = { padding: '12px', color: '#be185d' } // 删除 border
+    const rootAttrs = { id: 'root', title: null, 'data-test': 'yes' } // 删除 title
+    const onClick = () => console.log('root click: B')
+    const listChildren = [
+      h('li', { key: 'c' }, 'C'),
+      h('li', { key: 'a' }, 'A'),
+      h('li', { key: 'd' }, 'D'),
+    ]
+    const rootChildren = [
+      h(Text, '显式 Text 节点（V2）'),
+      h('p', { class: 'p2', style: { color: 'purple' } }, '段落二'),
+      h(Comment, '这是注释节点（createComment）'),
+      h('ul', { class: 'list' }, listChildren),
+    ]
+    return h('section', { class: rootClass, style: rootStyle, ...rootAttrs, onClick }, rootChildren)
+  }
+
+  const createViewPhase3 = () => {
+    const rootClass = ''
+    const rootStyle = { padding: '4px', background: '#f9fafb' } // 删除 color，新增 background
+    const rootAttrs = { id: 'root', title: null, 'data-test': 'yes', 'data-new': 'added' }
+    const onClick = null // 解绑事件
+    const listChildren = [
+      h('li', { key: 'a' }, 'A'),
+      h('li', { key: 'd' }, 'D'),
+    ]
+    const rootChildren = [
+      h(Text, '显式 Text 节点（V3，setText 更新）'),
+      h('p', { class: 'p3', style: { color: '#111827' } }, '段落三'),
+      h(Comment, '这是注释节点（createComment）'),
+      h('ul', { class: 'list' }, listChildren),
+    ]
+    return h('section', { class: rootClass, style: rootStyle, ...rootAttrs, onClick }, rootChildren)
+  }
+
+  const renderPhase = (phase) => {
+    // 注意：同一个 vnode 不能被用于两个容器/渲染器，否则会导致 DOM 被移动、事件重复等问题
+    let vnodeForApp
+    let vnodeForCustom
+    if (phase === 1) {
+      vnodeForApp = createViewPhase1()
+      vnodeForCustom = createViewPhase1()
+    } else if (phase === 2) {
+      vnodeForApp = createViewPhase2()
+      vnodeForCustom = createViewPhase2()
+    } else {
+      vnodeForApp = createViewPhase3()
+      vnodeForCustom = createViewPhase3()
+    }
+    render(vnodeForApp, $app)          // 官方渲染器
+    renderCustom(vnodeForCustom, $custom) // 自定义渲染器
+  }
+
+  // 绑定按钮事件
+  document.getElementById('btn1').addEventListener('click', () => renderPhase(1))
+  document.getElementById('btn2').addEventListener('click', () => renderPhase(2))
+  document.getElementById('btn3').addEventListener('click', () => renderPhase(3))
+
+  // 默认展示第一阶段
+  renderPhase(1)
+</script>
+</body>
+</html>

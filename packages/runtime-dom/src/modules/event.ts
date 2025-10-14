@@ -1,4 +1,4 @@
-import { HostElement } from '../types'
+import { HostElement } from '@vue/runtime-core'
 
 interface Invoker extends EventListener {
   value: EventValue

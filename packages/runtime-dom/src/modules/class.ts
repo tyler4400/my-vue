@@ -1,4 +1,4 @@
-import { HostElement } from '../types'
+import { HostElement } from '@vue/runtime-core'
 
 export default function patchClass(el: HostElement, value: any) {
   if (!value) {

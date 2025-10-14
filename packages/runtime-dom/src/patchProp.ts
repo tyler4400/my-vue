@@ -1,4 +1,4 @@
-import { RendererOptions } from './types'
+import { RendererOptions } from '@vue/runtime-core'
 import patchClass from './modules/class'
 import { patchAttr } from './modules/attr'
 import { patchStyle } from './modules/style'

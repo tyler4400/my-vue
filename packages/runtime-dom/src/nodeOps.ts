@@ -1,4 +1,4 @@
-import { HostElement, HostNode, RendererOptions } from './types'
+import { HostElement, HostNode, RendererOptions } from '@vue/runtime-core'
 
 // 主要是对节点元素的增删改查
 export const nodeOps: Omit<RendererOptions, 'patchProp'> = {
