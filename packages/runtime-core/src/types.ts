@@ -28,7 +28,6 @@ export interface RendererOptions {
     content: string,
     parent: HostElement,
     anchor: HostNode | null,
-    // namespace: ElementNamespace,
     start?: HostNode | null,
     end?: HostNode | null,
   ): [HostNode, HostNode]
@@ -47,16 +46,46 @@ export interface Renderer {
 }
 
 export type RootRenderFunction = (vnode: VNode | null, container: HostElement) => void
+export type MountChildrenFn = (children: VNodeArrayChildren, container: HostElement) => void
 
 // 先提供简化的VNode类型定义，后面再优化
 export interface VNode {
-  type: string
-  props: Record<string, string>
+  type: VNodeTypes
+  props: Record<string, unknown>
+  children: VNodeArrayChildren | string | null
+  __v_isVnode: true
+  key: PropertyKey | null // diff算法需要用到的key
+  el: HostNode | null // DOM 虚拟节点对应的真实节点
   shapeFlag: number
-  children: any
 }
 
-export type MountChildrenFn = (children: VNodeArrayChildren, container: HostElement) => void
+export type VNodeTypes =
+  | string
+  | VNode
+  | 'Component'
+  | ClassComponent
+  | 'Text'
+  | 'Static'
+  | 'Comment'
+  | 'Fragment'
+  | 'Teleport'
+  | 'TeleportImpl'
+  | 'Suspense'
+  | 'SuspenseImpl'
 
-type VNodeChildAtom = VNode | string | number | boolean | null | undefined | void
+export type VNodeProps = {
+  key?: PropertyKey
+  ref?: VNodeRef
+  ref_for?: boolean
+  ref_key?: string
+} & Record<string, unknown>
+
+type ClassComponent = any
+
+export type VNodeRef =
+  | string
+  | 'Ref'
+  | ((ref: Element | 'ComponentPublicInstance' | null, refs: Record<string, any>) => void)
+
 export type VNodeArrayChildren = Array<VNodeArrayChildren | VNodeChildAtom>
+type VNodeChildAtom = VNode | string | number | boolean | null | undefined | void

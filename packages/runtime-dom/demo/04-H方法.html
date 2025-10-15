@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>04-H方法</title>
+  <style>
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; }
+    *, *::before, *::after { box-sizing: border-box; }
+    #examples { padding: 10px; }
+    .example { border: 1px solid #e5e7eb; background: #ffffff; margin: 12px 8px; border-radius: 6px; overflow: hidden; }
+    .example-title { margin: 0; padding: 10px 12px; font-size: 14px; font-weight: 600; color: #111827; border-bottom: 1px solid #f3f4f6; }
+    .example-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 10px; align-items: start; }
+    .col { min-height: 120px; border: 1px dashed #e5e7eb; padding: 28px 12px 12px; background: #fafafa; position: relative; display: flow-root; }
+    .col::before { position: absolute; left: 12px; top: 6px; font-size: 12px; font-weight: 600; color: #374151; }
+    .col-official::before { content: '官方'; }
+    .col-custom::before { content: '自定义 render/h'; }
+    /* 一些小的展示样式 */
+    .list { padding-left: 18px; }
+    .chip { background: #f3f4f6; }
+  </style>
+</head>
+<body>
+<div>
+  <p style="margin-left: 16px; color: #6b7280;">点击各示例的自定义区域可测试 onClick 绑定</p>
+</div>
+<div id="examples"></div>
+<div id="diff-examples"></div>
+<script type="module">
+  import { render, h as vueH } from "../../../node_modules/vue/dist/vue.runtime.esm-browser.js";
+  import { render as renderCustom, h as customH } from '../dist/runtime-dom.esm.js'
+
+  const $examples = document.getElementById('examples')
+  const $diff = document.getElementById('diff-examples')
+
+  // 根据类型选择不同的 h 实现
+  const hFor = (type) => (type === 'custom' ? customH : vueH)
+
+  // 覆盖 h() 参数与 children 的关键路径示例（避免使用 Text/Comment 特殊节点）
+  const examples = [
+    { title: '1) 文本子节点：h(type, "text")', create: (type) => hFor(type)('section', '纯文本 children') },
+    { title: '2) 仅 props：h(type, props)', create: (type) => hFor(type)(
+      'section',
+      { class: 'wrap props-only',
+        style: { padding: '8px', color: '#1f2937', border: '2px dashed #9ca3af' },
+        id: 'props-only', 'data-x': '1',
+        onClick: () => console.log('props-only click') }
+    ) },
+    { title: '3) 数组子节点：h(type, [vnode, vnode])', create: (type) => {
+      const h = hFor(type)
+      return h('ul', { class: 'list' }, [
+        h('li', { key: 'a' }, 'A'),
+        h('li', { key: 'b' }, 'B'),
+        h('li', { key: 'c' }, 'C'),
+      ])
+    } },
+    { title: '4) 二参 vnode 判定：h(type, vnode)', create: (type) => {
+      const h = hFor(type)
+      return h('div', h('span', { class: 'chip', style: { padding: '2px 6px', border: '1px solid #d1d5db', borderRadius: '4px' } }, 'child'))
+    } },
+    { title: '5) 三参文本：h(type, props, "text")', create: (type) => hFor(type)(
+      'p',
+      { class: 'p3', style: { color: '#be185d' } },
+      'text children with props'
+    ) },
+    { title: '6) 三参 vnode：h(type, props, vnode)', create: (type) => {
+      const h = hFor(type)
+      return h('div', { class: 'box', style: { padding: '4px', border: '1px dashed #9ca3af' } }, h('em', 'inline'))
+    } },
+    { title: '7) 多参多个 vnode：h(type, props, v1, v2, ...)', create: (type) => {
+      const h = hFor(type)
+      return h('section', { class: 'multi' }, h('p', 'p1'), h('p', 'p2'), h('p', 'p3'))
+    } },
+    { title: '8) 数值转文本：h(type, 12345)', create: (type) => hFor(type)('section', 12345) },
+  ]
+
+  // 渲染一个示例（左官方/右自定义）
+  const mountOneExample = (example) => {
+    const wrapper = document.createElement('section')
+    wrapper.className = 'example'
+
+    const title = document.createElement('h3')
+    title.className = 'example-title'
+    title.textContent = example.title
+    wrapper.appendChild(title)
+
+    const columns = document.createElement('div')
+    columns.className = 'example-columns'
+
+    const left = document.createElement('div')
+    left.className = 'col col-official'
+
+    const right = document.createElement('div')
+    right.className = 'col col-custom'
+
+    columns.appendChild(left)
+    columns.appendChild(right)
+    wrapper.appendChild(columns)
+
+    // 生成 vnode
+    const vnodeForVue = example.create('vue')
+    const vnodeForCustom = example.create('custom')
+
+    // 渲染到各自容器
+    render(vnodeForVue, left)
+    renderCustom(vnodeForCustom, right)
+
+    $examples.appendChild(wrapper)
+  }
+
+  examples.forEach(mountOneExample)
+
+  // ============= 差异示例（与官方不一致） =============
+
+  const sectionTitle = document.createElement('h3')
+  sectionTitle.className = 'example-title'
+  sectionTitle.textContent = '与官方不一致的示例（标题内含解释说明）'
+  const sectionWrap = document.createElement('section')
+  sectionWrap.className = 'example'
+  sectionWrap.appendChild(sectionTitle)
+  $diff.appendChild(sectionWrap)
+
+  const safeRender = (renderFn, vnodeFactory, container) => {
+    try {
+      const vnode = vnodeFactory()
+      renderFn(vnode, container)
+    } catch (e) {
+      container.innerHTML = ''
+      const pre = document.createElement('pre')
+      pre.style.cssText = 'color:#b91c1c;white-space:pre-wrap;'
+      pre.textContent = '渲染错误：' + e
+      container.appendChild(pre)
+    }
+  }
+
+  const mountOneDiff = (example) => {
+    const wrap = document.createElement('div')
+    wrap.className = 'example-columns'
+    const left = document.createElement('div')
+    left.className = 'col col-official'
+    const right = document.createElement('div')
+    right.className = 'col col-custom'
+    wrap.appendChild(left)
+    wrap.appendChild(right)
+
+    const title = document.createElement('div')
+    title.style.cssText = 'grid-column:1/-1;color:#374151;font-size:13px;margin-bottom:6px;'
+    title.textContent = example.title
+    const block = document.createElement('div')
+    block.className = 'example'
+    const inner = document.createElement('div')
+    inner.className = 'example-columns'
+
+    // 为了复用样式结构，这里直接插入 wrap
+    sectionWrap.appendChild(title)
+    sectionWrap.appendChild(wrap)
+
+    // 渲染（容错）
+    safeRender(render, example.createOfficial, left)
+    safeRender(renderCustom, example.createCustom, right)
+  }
+
+  const diffExamples = [
+    {
+      title: 'D1) 数组 children 含原始文本（与官方不一致：官方会规范化为 Text；自定义会报错）',
+      createOfficial: () => {
+        const h = hFor('vue')
+        return h('div', [h('b', 'X'), ' raw ', h('i', 'Y')])
+      },
+      createCustom: () => {
+        const h = hFor('custom')
+        return h('div', [h('b', 'X'), ' raw ', h('i', 'Y')])
+      },
+    },
+    {
+      title: 'D2) children=0（与官方不一致：官方渲染为“0”；自定义被忽略）',
+      createOfficial: () => hFor('vue')('section', 0),
+      createCustom: () => hFor('custom')('section', 0),
+    },
+    {
+      title: 'D3) class 为数组（与官方不一致：官方 → "a b"；自定义 → "a,b"）',
+      createOfficial: () => hFor('vue')('div', { class: ['a', 'b'], style: { padding: '6px', border: '1px dashed #9ca3af' } }, 'class 数组'),
+      createCustom: () => hFor('custom')('div', { class: ['a', 'b'], style: { padding: '6px', border: '1px dashed #9ca3af' } }, 'class 数组'),
+    },
+    {
+      title: 'D4) class 为对象（与官方不一致：官方按 truthy 取键；自定义 → "[object Object]"）',
+      createOfficial: () => hFor('vue')('div', { class: { a: true, b: false, c: 1 }, style: { padding: '6px', border: '1px dashed #9ca3af' } }, 'class 对象'),
+      createCustom: () => hFor('custom')('div', { class: { a: true, b: false, c: 1 }, style: { padding: '6px', border: '1px dashed #9ca3af' } }, 'class 对象'),
+    },
+    {
+      title: 'D5) style 为字符串（与官方不一致：官方解析生效；自定义忽略并告警）',
+      createOfficial: () => hFor('vue')('div', { style: 'padding:8px;color:#111827;background:#f9fafb;border:1px dashed #9ca3af' }, 'style 字符串'),
+      createCustom: () => hFor('custom')('div', { style: 'padding:8px;color:#111827;background:#f9fafb;border:1px dashed #9ca3af' }, 'style 字符串'),
+    },
+    {
+      title: 'D6) style 值为数组（与官方不一致：官方取可用值；自定义赋为数组字符串）',
+      createOfficial: () => hFor('vue')('div', { style: { display: ['grid', 'block'], padding: '6px', border: '1px dashed #9ca3af' } }, 'style 数组值'),
+      createCustom: () => hFor('custom')('div', { style: { display: ['grid', 'block'], padding: '6px', border: '1px dashed #9ca3af' } }, 'style 数组值'),
+    },
+    {
+      title: 'D7) attr 数值 0（与官方不一致：官方写入 "0"；自定义移除属性）',
+      createOfficial: () => hFor('vue')('div', { tabindex: 0, 'data-zero': 0, style: { padding: '6px', border: '1px dashed #9ca3af' } }, 'attr 为 0'),
+      createCustom: () => hFor('custom')('div', { tabindex: 0, 'data-zero': 0, style: { padding: '6px', border: '1px dashed #9ca3af' } }, 'attr 为 0'),
+    },
+    {
+      title: 'D8) 多参 children 混入原始文本（与官方不一致：官方 normalize；自定义会报错）',
+      createOfficial: () => {
+        const h = hFor('vue')
+        return h('div', { style: { padding: '6px', border: '1px dashed #9ca3af' } }, h('span', 'X'), ' raw ', h('span', 'Y'))
+      },
+      createCustom: () => {
+        const h = hFor('custom')
+        return h('div', { style: { padding: '6px', border: '1px dashed #9ca3af' } }, h('span', 'X'), ' raw ', h('span', 'Y'))
+      },
+    },
+  ]
+
+  diffExamples.forEach(mountOneDiff)
+</script>
+</body>
+</html>
