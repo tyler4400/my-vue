@@ -27,10 +27,34 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
     patchProp: hostPatchProp,
   } = renderOptions
 
+  /**
+   * 暂时放一种更优的写法，兼顾了child是string等情形。但是先不着急加上， 看课程后续是否有优化这里
+   * function mountChildren(children, container) {
+   *   for (const child of children) {
+   *     if (Array.isArray(child)) {
+   *       mountChildren(child, container)         // 递归扁平化
+   *       continue
+   *     }
+   *     if (child == null || typeof child === 'boolean') {
+   *       continue                                // 忽略空/布尔
+   *     }
+   *     if (typeof child === 'string' || typeof child === 'number') {
+   *       const textNode = hostCreateText(String(child))
+   *       hostInsert(textNode, container)         // 直接作为文本节点插入
+   *       continue
+   *     }
+   *     // 走 vnode 路径
+   *     patch(null, child as VNode, container)
+   *   }
+   * }
+   * @param children
+   * @param container
+   */
   const mountChildren: MountChildrenFn = (children, container) => {
     for (let i = 0; i < children.length; i++) {
       const child = children[i]
-      // todo 处理 child别的类型，暂时都按照vnode处理
+      // todo 处理 child别的类型，暂时都按照vnode处理，child还可能是string
+      console.log('renderer.ts-mountChildren-child: ', child)
       patch(null, child as VNode, container)
     }
   }
