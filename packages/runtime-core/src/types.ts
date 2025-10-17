@@ -63,7 +63,7 @@ export type VNodeTypes =
   | string
   | VNode
   | 'Component'
-  | ClassComponent
+  | 'ClassComponent'
   | 'Text'
   | 'Static'
   | 'Comment'
@@ -79,8 +79,6 @@ export type VNodeProps = {
   ref_for?: boolean
   ref_key?: string
 } & Record<string, unknown>
-
-type ClassComponent = any
 
 export type VNodeRef =
   | string

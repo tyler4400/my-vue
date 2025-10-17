@@ -33,3 +33,7 @@ export function createVnode(
 export function isVnode(value: any) {
   return value?.__v_isVnode
 }
+
+export function isSameVnode(n1: VNode, n2: VNode) {
+  return n1 && n2 && n1.type === n2.type && n1.key === n2.key
+}

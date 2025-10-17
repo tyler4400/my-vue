@@ -8,11 +8,11 @@ import {
   VNodeArrayChildren,
 } from './types'
 import { ShapeFlags } from '@vue/shared'
+import { isSameVnode } from './createVnode'
 
 export function createRenderer(renderOptions: RendererOptions): Renderer {
   const {
     insert: hostInsert,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     remove: hostRemove,
     createElement: hostCreateElement,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -63,6 +63,7 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
     const { type, children, props, shapeFlag } = vnode
     console.log(vnode, shapeFlag, ShapeFlags.TEXT_CHILDREN)
     const el = hostCreateElement(type as string)
+    vnode.el = el // 让vnode指向真实的el
     if (props) {
       for (const key in props) {
         hostPatchProp(el, key, null, props[key])
@@ -84,19 +85,34 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
     hostInsert(el, container)
   }
 
-  /**
-   * @param n1 lastVnode
-   * @param n2 newVnode
-   * @param container
-   */
-  const patch = (n1: VNode | null, n2: VNode, container: HostElement) => {
-    if (n1 === n2) return
-    if (n1 === null) {
-      mountElement(n2, container)
-    } else {
-      // lastVnode和n2都有， 那就需要更新了 todo
-      console.log('todo: 更新vnode')
+  const patch = (lastVnode: VNode | null, newVnode: VNode, container: HostElement) => {
+    if (lastVnode === newVnode) return
+    if (lastVnode === null) {
+      // lastVnode不存在，新建
+      mountElement(newVnode, container)
+      return
     }
+    if (isSameVnode(lastVnode, newVnode)) {
+      // lastVnode 存在， last和new指向也相同，那就要更新属性props和child
+      patchElement(lastVnode, newVnode, container)
+    } else {
+      // lastVnode 存在， last和new指向不相同，直接移除老的dom元素,初始化新的dom元素
+      unmount(lastVnode)
+      lastVnode = null
+    }
+  }
+
+  /**
+   * 进入到当前方法的，说明新旧vnode都存在，且新旧vnode的type和key都相同
+   * 那么就复用他们的el，更新他们的props和children
+   */
+  const patchElement = (lastVnode: VNode, newVnode: VNode, container: HostElement) => {
+    console.log('进入到当前方法的，说明新旧vnode都存在，且新旧vnode的type和key都相同: ', lastVnode, newVnode, container)
+    // todo
+  }
+
+  const unmount = (vnode: VNode) => {
+    hostRemove(vnode.el)
   }
 
   /**
@@ -107,16 +123,14 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
   const render: RootRenderFunction = (vnode, container) => {
     if (vnode == null) {
       if (container._vnode) {
-        // 需要卸载 todo
-        // unmount(container._vnode, null, null, true)
-        console.log('需要卸载')
+        unmount(container._vnode)
       }
     } else {
       // 将虚拟节点变成真实节点进行渲染
       patch(container._vnode || null, vnode, container)
     }
 
-    // _vnode保存上次的vnode， 做对比用
+    // _vnode保存上次的vnode， 做对比用。  vnode.el和container._vnode互为引用
     container._vnode = vnode
   }
 
