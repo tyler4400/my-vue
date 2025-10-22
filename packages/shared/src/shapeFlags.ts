@@ -22,3 +22,25 @@ export enum ShapeFlags {
   // 表示组件类型，有状态组件与无状态函数组件的组合 // 110
   COMPONENT = ShapeFlags.STATEFUL_COMPONENT | ShapeFlags.FUNCTIONAL_COMPONENT,
 }
+
+export const isElement = (type: number) => ShapeFlags.ELEMENT & type
+
+export const isFunctionalComponent = (type: number) => ShapeFlags.FUNCTIONAL_COMPONENT & type
+
+export const isStatefulComponent = (type: number) => ShapeFlags.STATEFUL_COMPONENT & type
+
+export const isTextChildren = (type: number) => ShapeFlags.TEXT_CHILDREN & type
+
+export const isArrayChildren = (type: number) => ShapeFlags.ARRAY_CHILDREN & type
+
+export const isSlotsChildren = (type: number) => ShapeFlags.SLOTS_CHILDREN & type
+
+export const isTELEPORT = (type: number) => ShapeFlags.TELEPORT & type
+
+export const isSUSPENSE = (type: number) => ShapeFlags.SUSPENSE & type
+
+export const isComponentShouldKeepAlive = (type: number) => ShapeFlags.COMPONENT_SHOULD_KEEP_ALIVE & type
+
+export const isComponentKeptAlive = (type: number) => ShapeFlags.COMPONENT_KEPT_ALIVE & type
+
+export const isCOMPONENT = (type: number) => ShapeFlags.COMPONENT & type

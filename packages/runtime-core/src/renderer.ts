@@ -8,7 +8,7 @@ import {
   VNode,
   VNodeArrayChildren,
 } from './types'
-import { ShapeFlags } from '@vue/shared'
+import { isArray, isArrayChildren, isTextChildren } from '@vue/shared'
 import { isSameVnode } from './createVnode'
 
 export function createRenderer(renderOptions: RendererOptions): Renderer {
@@ -60,11 +60,22 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
     }
   }
 
+  const unmountChildren = (children: VNodeArrayChildren) => {
+    for (let i = 0; i < children.length; i++) {
+      const child = children[i]
+      if (isArray(child)) {
+        unmountChildren(child)
+      } else {
+        unmount(child as VNode)
+      }
+    }
+  }
+
   const mountElement = (vnode: VNode, container: HostElement) => {
     const { type, children, props, shapeFlag } = vnode
     console.log('渲染的vnode', vnode, shapeFlag)
     const el = hostCreateElement(type as string)
-    vnode.el = el // 让vnode指向真实的el
+    vnode.el = el // 让vnode指向真实的el // todo 之前在 mountChildren的时候 未考虑string， 如果这里的vnode是字符串， 那么这一行就会保存， string是基本变量， 没有属性
     if (props) {
       for (const key in props) {
         hostPatchProp(el, key, null, props[key])
@@ -77,13 +88,17 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
      * 所以这个shapeFlag就相当于是一个list的集合，下面代码等同于
      * shapeFlag.contains(ShapeFlags.TEXT_CHILDREN)
      */
-    if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
+    if (isTextChildren(shapeFlag)) {
       hostSetElementText(el, children as string)
-    } else if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+    } else if (isArrayChildren(shapeFlag)) {
       mountChildren(children as VNodeArrayChildren, el)
     }
 
     hostInsert(el, container)
+  }
+
+  const unmount = (vnode: VNode) => {
+    hostRemove(vnode.el)
   }
 
   const patch = (lastVnode: VNode | null, newVnode: VNode, container: HostElement) => {
@@ -118,8 +133,7 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
     const newProps = newVnode.props || {}
 
     patchProps(oldProps, newProps, el as HostElement)
-    // todo patchChildren(n1, n2, el)
-    console.log('todo patchChildren(n1, n2, el)')
+    patchChildren(lastVnode, newVnode, el as HostElement)
   }
 
   const patchProps = (oldProps: Data, newProps: Data, el: HostElement) => {
@@ -135,8 +149,64 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
     }
   }
 
-  const unmount = (vnode: VNode) => {
-    hostRemove(vnode.el)
+  /**
+   * 总结原视频内容后: 目前子节点只考虑可能是 text/array/null
+   * (text, text/null) => unmountChildren老节点，或者hostSetElementText新节点
+   * (text, array) => 移除老节点，mountChildren
+   * (array, array) => 全量diff
+   * (array, text/null) => unmountChildren, hostSetElementText新节点
+   * (null, text/null) => 或hostSetElementText新节点
+   * (null, array) => mountChildren新节点
+   *
+   *
+   *   // 原视频中内容：
+   *   1. 老的是数组，新的是文本，移除老的子节点，挂载新的文本
+   *   2. 老的是文本，新的是文本，内容不同进行替换
+   *   3. 老的是数组，新的是数组，全量diff
+   *   4. 老的是数组，新的不是数组，移除老的子节点
+   *   5. 老的是文本，新的是空
+   *   6. 老的是文本，新的是数组
+   */
+  const patchChildren = (lastVnode: VNode, newVnode: VNode, container: HostElement) => {
+    const lastShape = lastVnode.shapeFlag
+    const newShape = newVnode.shapeFlag
+
+    const lastChildren = lastVnode.children
+    const newChildren = newVnode.children
+
+    if (isTextChildren(lastShape)) {
+      if (isTextChildren(newShape) && lastChildren !== newChildren) {
+        hostSetElementText(container, newChildren as string)
+      }
+      if (newChildren === null) {
+        hostSetElementText(container, '')
+      }
+      if (isArrayChildren(newShape)) {
+        hostSetElementText(container, '')
+        mountChildren(newChildren as VNodeArrayChildren, container)
+      }
+    }
+
+    if (isArrayChildren(lastShape)) {
+      if (isTextChildren(newShape)) {
+        unmountChildren(lastChildren as VNodeArrayChildren)
+        hostSetElementText(container, newChildren as string)
+      }
+      if (isArrayChildren(newShape)) {
+        console.log('todo: 子节点都是array， 需要全量diff')
+      }
+      if (newChildren === null) {
+        unmountChildren(lastChildren as VNodeArrayChildren)
+      }
+    }
+    if (lastChildren === null) {
+      if (isTextChildren(newShape)) {
+        hostSetElementText(container, newChildren as string)
+      }
+      if (isArrayChildren(newShape)) {
+        mountChildren(newChildren as VNodeArrayChildren, container)
+      }
+    }
   }
 
   /**
