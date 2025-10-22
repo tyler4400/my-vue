@@ -13,7 +13,6 @@ export interface RendererOptions {
     type: string,
     // namespace?: ElementNamespace,
     isCustomizedBuiltIn?: string,
-    // vnodeProps?: (VNodeProps & { [key: string]: any }) | null,
   ): HostElement
   createText(text: string): HostNode
   createComment(text: string): HostNode
@@ -51,13 +50,15 @@ export type MountChildrenFn = (children: VNodeArrayChildren, container: HostElem
 // 先提供简化的VNode类型定义，后面再优化
 export interface VNode {
   type: VNodeTypes
-  props: Record<string, unknown>
+  props: VNodeProps
   children: VNodeArrayChildren | string | null
   __v_isVnode: true
   key: PropertyKey | null // diff算法需要用到的key
   el: HostNode | null // DOM 虚拟节点对应的真实节点
   shapeFlag: number
 }
+
+export type Data = Record<string, any>
 
 export type VNodeTypes =
   | string
@@ -78,7 +79,7 @@ export type VNodeProps = {
   ref?: VNodeRef
   ref_for?: boolean
   ref_key?: string
-} & Record<string, unknown>
+} & Data
 
 export type VNodeRef =
   | string

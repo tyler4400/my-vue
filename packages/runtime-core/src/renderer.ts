@@ -1,4 +1,5 @@
 import {
+  Data,
   HostElement,
   MountChildrenFn,
   Renderer,
@@ -54,14 +55,14 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
     for (let i = 0; i < children.length; i++) {
       const child = children[i]
       // todo 处理 child别的类型，暂时都按照vnode处理，child还可能是string
-      console.log('renderer.ts-mountChildren-child: ', child)
+      console.log('渲染子元素', child)
       patch(null, child as VNode, container)
     }
   }
 
   const mountElement = (vnode: VNode, container: HostElement) => {
     const { type, children, props, shapeFlag } = vnode
-    console.log(vnode, shapeFlag, ShapeFlags.TEXT_CHILDREN)
+    console.log('渲染的vnode', vnode, shapeFlag)
     const el = hostCreateElement(type as string)
     vnode.el = el // 让vnode指向真实的el
     if (props) {
@@ -97,8 +98,10 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
       patchElement(lastVnode, newVnode, container)
     } else {
       // lastVnode 存在， last和new指向不相同，直接移除老的dom元素,初始化新的dom元素
+      console.log('lastVnode 存在， last和new指向不相同，直接移除老的dom元素,初始化新的dom元素', lastVnode, newVnode)
       unmount(lastVnode)
       lastVnode = null
+      mountElement(newVnode, container)
     }
   }
 
@@ -108,7 +111,28 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
    */
   const patchElement = (lastVnode: VNode, newVnode: VNode, container: HostElement) => {
     console.log('进入到当前方法的，说明新旧vnode都存在，且新旧vnode的type和key都相同: ', lastVnode, newVnode, container)
-    // todo
+    // 复用 dom元素， 也就是el。 然后对属性和child进行更新
+    const el = (newVnode.el = lastVnode.el)
+
+    const oldProps = lastVnode.props || {}
+    const newProps = newVnode.props || {}
+
+    patchProps(oldProps, newProps, el as HostElement)
+    // todo patchChildren(n1, n2, el)
+    console.log('todo patchChildren(n1, n2, el)')
+  }
+
+  const patchProps = (oldProps: Data, newProps: Data, el: HostElement) => {
+    // 新的要全部生效
+    for (const key in newProps) {
+      hostPatchProp(el, key, oldProps[key], newProps[key])
+    }
+    for (const key in oldProps) {
+      if (!(key in newProps)) {
+        //以前有，现在没有，要删除掉
+        hostPatchProp(el, key, oldProps[key], null)
+      }
+    }
   }
 
   const unmount = (vnode: VNode) => {

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>03-Renderer对比</title>
+  <title>03-Renderer， h对比</title>
   <style>
     body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; }
     #controls { padding: 12px; border-bottom: 1px solid #e5e7eb; position: sticky; top: 0; background: #fff; }
@@ -25,9 +25,10 @@
   </style>
 </head>
 <body>
-<div id="controls" role="toolbar" aria-label="阶段切换">
+<div style="display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-start; row-gap: 5px" id="controls" role="toolbar" aria-label="阶段切换">
   <button id="btn1" type="button" aria-label="切换到阶段一">阶段 1</button>
-  <button id="btn2" type="button" aria-label="切换到阶段二">阶段 2</button>
+  <button id="btn4" type="button" aria-label="切换到阶段三">改变阶段1的根节点，期望全部替换</button>
+  <button id="btn2" type="button" aria-label="切换到阶段二">改变阶段1的children，根不变（只有属性变了， children的改变todo）</button>
   <button id="btn3" type="button" aria-label="切换到阶段三">阶段 3</button>
   <span style="margin-left:12px;color:#6b7280;">切换阶段功能还没完成</span>
 </div>
@@ -35,13 +36,13 @@
 <div id="custom"></div>
 <script type="module">
   import { render, h, Text, Comment } from "../../../node_modules/vue/dist/vue.runtime.esm-browser.js";
-  import { render as renderCustom } from '../dist/runtime-dom.esm.js'
+  import { render as renderCustom, h as hCustom } from '../dist/runtime-dom.esm.js'
 
   const $app = document.getElementById('app')
   const $custom = document.getElementById('custom')
 
   // 分阶段视图：每个阶段独立定义，避免混合条件
-  const createViewPhase1 = () => {
+  const createViewPhase1 = (h) => {
     const rootClass = 'wrap a'
     const rootStyle = { padding: '12px', border: '2px dashed #999', color: '#1f2937' }
     const rootAttrs = { id: 'root', title: 'tip', 'data-test': 'yes' }
@@ -50,7 +51,16 @@
     return h('section', { class: rootClass, style: rootStyle, ...rootAttrs, onClick }, rootChildren)
   }
 
-  const createViewPhase2 = () => {
+  const createViewPhaseNewVnode = (h) => {
+    const rootClass = 'wrap a'
+    const rootStyle = { padding: '12px', border: '2px dashed red', color: '#d3ae60' }
+    const rootAttrs = { id: 'root', title: 'tip', 'data-test': 'yes' }
+    const onClick = () => console.log('root click: A')
+    const rootChildren = [h('p', '直接改变'), h('p', '根节点')]
+    return h('div', { class: rootClass, style: rootStyle, ...rootAttrs, onClick }, rootChildren)
+  }
+
+  const createViewPhase2 = (h) => {
     const rootClass = 'wrap b'
     const rootStyle = { padding: '12px', color: '#be185d' } // 删除 border
     const rootAttrs = { id: 'root', title: null, 'data-test': 'yes' } // 删除 title
@@ -69,7 +79,7 @@
     return h('section', { class: rootClass, style: rootStyle, ...rootAttrs, onClick }, rootChildren)
   }
 
-  const createViewPhase3 = () => {
+  const createViewPhase3 = (h) => {
     const rootClass = ''
     const rootStyle = { padding: '4px', background: '#f9fafb' } // 删除 color，新增 background
     const rootAttrs = { id: 'root', title: null, 'data-test': 'yes', 'data-new': 'added' }
@@ -92,14 +102,20 @@
     let vnodeForApp
     let vnodeForCustom
     if (phase === 1) {
-      vnodeForApp = createViewPhase1()
-      vnodeForCustom = createViewPhase1()
-    } else if (phase === 2) {
-      vnodeForApp = createViewPhase2()
-      vnodeForCustom = createViewPhase2()
-    } else {
-      vnodeForApp = createViewPhase3()
-      vnodeForCustom = createViewPhase3()
+      vnodeForApp = createViewPhase1(h)
+      vnodeForCustom = createViewPhase1(hCustom)
+    }
+      if (phase === 2) {
+      vnodeForApp = createViewPhase2(h)
+      vnodeForCustom = createViewPhase2(hCustom)
+    }
+    if (phase === 3){
+      vnodeForApp = createViewPhase3(h)
+      vnodeForCustom = createViewPhase3(hCustom)
+    }
+    if (phase === 4){
+      vnodeForApp = createViewPhaseNewVnode(h)
+      vnodeForCustom = createViewPhaseNewVnode(hCustom)
     }
     render(vnodeForApp, $app)          // 官方渲染器
     renderCustom(vnodeForCustom, $custom) // 自定义渲染器
@@ -109,6 +125,7 @@
   document.getElementById('btn1').addEventListener('click', () => renderPhase(1))
   document.getElementById('btn2').addEventListener('click', () => renderPhase(2))
   document.getElementById('btn3').addEventListener('click', () => renderPhase(3))
+  document.getElementById('btn4').addEventListener('click', () => renderPhase(4))
 
   // 默认展示第一阶段
   renderPhase(1)
