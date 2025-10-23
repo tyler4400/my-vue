@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>05-patchChildren 对比（官方 vs 自定义 renderCustom/hCustom）</title>
+  <title>05-patchKeyedChildren 对比（官方 vs 自定义 renderCustom/hCustom）</title>
   <style>
     body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; }
     #controls { padding: 12px; border-bottom: 1px solid #e5e7eb; position: sticky; top: 0; background: #fff; z-index: 100;}
@@ -22,7 +22,7 @@
 </head>
 <body>
 <div id="controls" role="region" aria-label="说明">
-  <div style="font-weight:600; margin-bottom:6px;">patchChildren 各情形对比（左：官方 render/h，右：自定义 renderCustom/hCustom）</div>
+  <div style="font-weight:600; margin-bottom:6px;">patchKeyedChildren 各情形对比（左：官方 render/h，右：自定义 renderCustom/hCustom）</div>
   <div style="color:#6b7280; font-size:12px;">每条用例点击“渲染初始/渲染更新”观察差异；特别留意 “数组→数组（官方 diff、自定义仅 log）” 与 “文本→空（官方清空、自定义可能不变）”。</div>
 </div>
 
@@ -34,60 +34,59 @@
 
   const cases = [
     {
-      id: 'text-to-text',
-      title: '文本 → 文本',
-      desc: '旧 children 为纯文本，新 children 为不同文本（应更新 textContent）',
-      makeInit: (h) => h('div', 'old'),
-      makeNext: (h) => h('div', 'new'),
+      id: 'same-head',
+      title: '头部一样',
+      desc: '旧为 [A,B,C]，新为 [A,B,D,E]',
+      makeInit: (h) => h('ul', [
+        h('li',{key:'a'},'A'),
+        h('li',{key:'b'},'B'),
+        h('li',{key:'c'},'C')
+      ]),
+      makeNext: (h) => h('ul', [
+        h('li',{key:'a'},'A！'),
+        h('li',{key:'b'},'B！'),
+        h('li',{key:'d'},'D！'),
+        h('li',{key:'e'},'E！')
+      ]),
     },
     {
-      id: 'text-to-array',
-      title: '文本 → 数组',
-      desc: '旧为纯文本，新为多个子节点（应清空文本并挂载子节点）',
-      makeInit: (h) => h('div', 'hello'),
-      makeNext: (h) => h('div', [ h('span','A'), h('span','B') ]),
+      id: 'same-tail',
+      title: '尾部一样',
+      desc: '旧为 [C,B,A]，新为 [E,D,B,A]',
+      makeInit: (h) => h('ul', [
+        h('li',{key:'c'},'C'),
+        h('li',{key:'b'},'B'),
+        h('li',{key:'a'},'A'),
+      ]),
+      makeNext: (h) => h('ul', [
+        h('li',{key:'e'},'E！'),
+        h('li',{key:'d'},'D！'),
+        h('li',{key:'b'},'B！'),
+        h('li',{key:'a'},'A！'),
+      ]),
     },
     {
-      id: 'text-to-null',
-      title: '文本 → 空',
-      desc: '旧为纯文本，新为 null（官方应清空；当前实现已经覆盖此分支，也会变）',
-      makeInit: (h) => h('div', 'bye'),
-      makeNext: (h) => h('div', null),
-    },
-    {
-      id: 'array-to-text',
-      title: '数组 → 文本',
-      desc: '旧为子节点数组，新为文本（应卸载旧子节点并设置文本）',
-      makeInit: (h) => h('div', [ h('i','1'), h('i','2') ]),
-      makeNext: (h) => h('div', 'text'),
-    },
-    {
-      id: 'array-to-array',
-      title: '数组 → 数组（全量 diff）',
-      desc: '旧为 [A,B,C]，新为 [B,A,D]（官方会 diff；当前实现仅 log，不变更）',
-      makeInit: (h) => h('ul', [ h('li',{key:'a'},'A'), h('li',{key:'b'},'B'), h('li',{key:'c'},'C') ]),
-      makeNext: (h) => h('ul', [ h('li',{key:'b'},'B'), h('li',{key:'a'},'A'), h('li',{key:'d'},'D') ]),
-    },
-    {
-      id: 'array-to-null',
-      title: '数组 → 空',
-      desc: '旧为子节点数组，新为 null（应卸载全部子节点）',
-      makeInit: (h) => h('div', [ h('b','X'), h('b','Y') ]),
-      makeNext: (h) => h('div', null),
-    },
-    {
-      id: 'null-to-text',
-      title: '空 → 文本',
-      desc: '旧为 null，新为文本（应设为文本）',
-      makeInit: (h) => h('div', null),
-      makeNext: (h) => h('div', 'text'),
-    },
-    {
-      id: 'null-to-array',
-      title: '空 → 数组',
-      desc: '旧为 null，新为子节点数组（应挂载子节点）',
-      makeInit: (h) => h('ul', null),
-      makeNext: (h) => h('ul', [ h('li',{key:'b'},'B'), h('li',{key:'a'},'A'), h('li',{key:'d'},'D') ]),
+      id: 'same-head-tail',
+      title: '头尾一样，中间不一样',
+      desc: '旧为 [A,B,C,D,E,F,G]，新为 [A,B,C,X,Y,F,G]',
+      makeInit: (h) => h('ul', [
+        h('li',{key:'a'},'A'),
+        h('li',{key:'b'},'B'),
+        h('li',{key:'c'},'C'),
+        h('li',{key:'d'},'D'),
+        h('li',{key:'e'},'E'),
+        h('li',{key:'f'},'F'),
+        h('li',{key:'g'},'G'),
+      ]),
+      makeNext: (h) => h('ul', [
+        h('li',{key:'a'},'A!'),
+        h('li',{key:'b'},'B!'),
+        h('li',{key:'c'},'C!'),
+        h('li',{key:'x'},'X!'),
+        h('li',{key:'y'},'Y!'),
+        h('li',{key:'f'},'F!'),
+        h('li',{key:'g'},'G!'),
+      ]),
     },
   ]
 

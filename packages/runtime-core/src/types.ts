@@ -86,5 +86,5 @@ export type VNodeRef =
   | 'Ref'
   | ((ref: Element | 'ComponentPublicInstance' | null, refs: Record<string, any>) => void)
 
-export type VNodeArrayChildren = Array<VNodeArrayChildren | VNodeChildAtom>
-type VNodeChildAtom = VNode | string | number | boolean | null | undefined | void
+export type VNodeArrayChildren = Array<'VNodeArrayChildren' | VNodeChildAtom>
+export type VNodeChildAtom = VNode | string | number | boolean | null | undefined | void

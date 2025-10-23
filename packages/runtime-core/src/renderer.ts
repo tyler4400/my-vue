@@ -123,6 +123,7 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
   /**
    * 进入到当前方法的，说明新旧vnode都存在，且新旧vnode的type和key都相同
    * 那么就复用他们的el，更新他们的props和children
+   * @param container 实际没用到
    */
   const patchElement = (lastVnode: VNode, newVnode: VNode, container: HostElement) => {
     console.log('进入到当前方法的，说明新旧vnode都存在，且新旧vnode的type和key都相同: ', lastVnode, newVnode, container)
@@ -167,7 +168,7 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
    *   5. 老的是文本，新的是空
    *   6. 老的是文本，新的是数组
    */
-  const patchChildren = (lastVnode: VNode, newVnode: VNode, container: HostElement) => {
+  const patchChildren = (lastVnode: VNode, newVnode: VNode, el: HostElement) => {
     const lastShape = lastVnode.shapeFlag
     const newShape = newVnode.shapeFlag
 
@@ -176,24 +177,24 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
 
     if (isTextChildren(lastShape)) {
       if (isTextChildren(newShape) && lastChildren !== newChildren) {
-        hostSetElementText(container, newChildren as string)
+        hostSetElementText(el, newChildren as string)
       }
       if (newChildren === null) {
-        hostSetElementText(container, '')
+        hostSetElementText(el, '')
       }
       if (isArrayChildren(newShape)) {
-        hostSetElementText(container, '')
-        mountChildren(newChildren as VNodeArrayChildren, container)
+        hostSetElementText(el, '')
+        mountChildren(newChildren as VNodeArrayChildren, el)
       }
     }
 
     if (isArrayChildren(lastShape)) {
       if (isTextChildren(newShape)) {
         unmountChildren(lastChildren as VNodeArrayChildren)
-        hostSetElementText(container, newChildren as string)
+        hostSetElementText(el, newChildren as string)
       }
       if (isArrayChildren(newShape)) {
-        console.log('todo: 子节点都是array， 需要全量diff')
+        patchKeyedChildren(lastChildren as VNodeArrayChildren, newChildren as VNodeArrayChildren, el)
       }
       if (newChildren === null) {
         unmountChildren(lastChildren as VNodeArrayChildren)
@@ -201,12 +202,56 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
     }
     if (lastChildren === null) {
       if (isTextChildren(newShape)) {
-        hostSetElementText(container, newChildren as string)
+        hostSetElementText(el, newChildren as string)
       }
       if (isArrayChildren(newShape)) {
-        mountChildren(newChildren as VNodeArrayChildren, container)
+        mountChildren(newChildren as VNodeArrayChildren, el)
       }
     }
+  }
+
+  /**
+   *  比较两个vnodeList的差异，并用2去更新1更新el，注意必须是含有key节点
+   *   常用到的api：appendChild、removeChild、insertBefore
+   *
+   *  1. 先从头比一遍， 再从尾部diff一遍。 减少比对范围，增加复用范围。
+   *  2
+   */
+  const patchKeyedChildren = (vnodeList1: VNodeArrayChildren, vnodeList2: VNodeArrayChildren, el: HostElement) => {
+    let headP = 0 // 开始比对的头索引
+    let tailP1 = vnodeList1.length - 1 // 第一个数组的尾部索引
+    let tailP2 = vnodeList2.length - 1 // 第二个数组的尾部索引
+
+    // 先从头diff一遍，
+    while (headP <= tailP1 && headP <= tailP2) {
+      const node1 = vnodeList1[headP] as VNode
+      const node2 = vnodeList2[headP] as VNode
+      if (isSameVnode(node1, node2)) {
+        patch(node1, node2, el)
+      } else {
+        /**
+         * 旧为 [A,B,C]，新为 [A,B,D,E]
+         * 那么到C的时候就应该停止
+         */
+        break
+      }
+      headP++
+    }
+    console.log('先从头部diff一遍，结束时此时头尾指针所处位置', headP, tailP1, tailP2)
+
+    // 再从尾部diff一遍。 减少比对范围，增加复用范围。
+    while (headP <= tailP1 && headP <= tailP2) {
+      const node1 = vnodeList1[tailP1] as VNode
+      const node2 = vnodeList2[tailP2] as VNode
+      if (isSameVnode(node1, node2)) {
+        patch(node1, node2, el)
+      } else {
+        break
+      }
+      tailP1--
+      tailP2--
+    }
+    console.log('再从尾部diff一遍，结束时此时头尾指针所处位置', headP, tailP1, tailP2)
   }
 
   /**
