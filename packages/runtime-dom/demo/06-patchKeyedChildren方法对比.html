@@ -97,7 +97,7 @@
     {
       id: 'same-head-tail',
       title: '头尾一样，中间不一样',
-      desc: '旧为 [A,B,C,D,E,F,G]，新为 [A,B,C,X,Y,F,G]',
+      desc: '旧为 [A,B,C,D,E,F,G]，新为 [A,B,E,C,D,H,F,G]。 结束时此时头尾指针所处位置 2 4 5',
       makeInit: (h) => h('ul', [
         h('li',{key:'a'},'A'),
         h('li',{key:'b'},'B'),
@@ -110,9 +110,10 @@
       makeNext: (h) => h('ul', [
         h('li',{key:'a'},'A!'),
         h('li',{key:'b'},'B!'),
+        h('li',{key:'e'},'E!'),
         h('li',{key:'c'},'C!'),
-        h('li',{key:'x'},'X!'),
-        h('li',{key:'y'},'Y!'),
+        h('li',{key:'d'},'D!'),
+        h('li',{key:'h'},'H!'),
         h('li',{key:'f'},'F!'),
         h('li',{key:'g'},'G!'),
       ]),

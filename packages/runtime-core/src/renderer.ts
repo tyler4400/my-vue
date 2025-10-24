@@ -124,6 +124,8 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
   /**
    * 进入到当前方法的，说明新旧vnode都存在，且新旧vnode的type和key都相同
    * 那么就复用他们的el，更新他们的props和children
+   * @param lastVnode
+   * @param newVnode
    * @param container 实际没用到
    */
   const patchElement = (lastVnode: VNode, newVnode: VNode, container: HostElement) => {
@@ -212,26 +214,28 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
   }
 
   /**
+   *  强烈建议看此段代码的时候搭配`07-patchKeyedChildren函数解释说明.md` 一起看
+   *
    *  比较两个vnodeList的差异，并用2去更新1更新el，注意必须是含有key节点
    *   常用到的api：appendChild、removeChild、insertBefore
    *
    *  1. 先从头比一遍， 再从尾部diff一遍。 减少比对范围，增加复用范围。
-   *  2
+   *  2. 再针对各种情形分别判断
    */
   const patchKeyedChildren = (vnodeList1: VNodeArrayChildren, vnodeList2: VNodeArrayChildren, el: HostElement) => {
     let head = 0 // 开始比对的头索引
     let tail1 = vnodeList1.length - 1 // 第一个数组的尾部索引
     let tail2 = vnodeList2.length - 1 // 第二个数组的尾部索引
 
-    // 先从头diff一遍，
     // 1. sync from start
     // (a b) c
     // (a b) d e
+    // 先从头diff一遍，
     while (head <= tail1 && head <= tail2) {
       const node1 = vnodeList1[head] as VNode
       const node2 = vnodeList2[head] as VNode
       if (isSameVnode(node1, node2)) {
-        patch(node1, node2, el)
+        patch(node1, node2, el) // 这里其实可以直接走patchElement
       } else {
         /**
          * 旧为 [A,B,C]，新为 [A,B,D,E]
@@ -241,12 +245,11 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
       }
       head++
     }
-    console.log('先从头部diff一遍，结束时此时头尾指针所处位置', head, tail1, tail2)
 
-    // 再从尾部diff一遍。 减少比对范围，增加复用范围。
     // 2. sync from end
     // a (b c)
     // d e (b c)
+    // 再从尾部diff一遍。 减少比对范围，增加复用范围。
     while (head <= tail1 && head <= tail2) {
       const node1 = vnodeList1[tail1] as VNode
       const node2 = vnodeList2[tail2] as VNode
@@ -258,7 +261,7 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
       tail1--
       tail2--
     }
-    console.log('再从尾部diff一遍，结束时此时头尾指针所处位置', head, tail1, tail2)
+    console.log('头尾分别diff一遍，结束时此时头，尾1，尾2指针所处位置：', head, tail1, tail2)
 
     // 3. common sequence + mount
     // (a b)
@@ -267,6 +270,7 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
     // (a b)
     // c (a b)
     // i = 0, e1 = -1, e2 = 0
+    // 对新增的进行挂载
     if (head > tail1) {
       if (head <= tail2) {
         // 新节点单纯比旧节点多的时候（中间是一样的， 不管是尾多还是头多），肯定是 ```head > tail1 && head <= tail2```
@@ -287,11 +291,55 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
     // a (b c)
     // (b c)
     // i = 0, e1 = 0, e2 = -1
+    // 对删除的进行卸载
     if (head > tail2) {
       if (head <= tail1) {
         while (head <= tail1) {
           unmount(vnodeList1[head] as VNode)
           head++
+        }
+      }
+    }
+
+    // 5. unknown sequence
+    // [i ... e1 + 1]: a b [c d e] f g
+    // [i ... e2 + 1]: a b [e d c h] f g
+    // i = 2, e1 = 4, e2 = 5
+    else {
+      const s1 = head // prev starting index // 就是除去头尾之后，中间不一样的部分的初始下标 [c d e]
+      const s2 = head // next starting index // [e d c h]的初始下标
+
+      // 5.1 build key:index map for newChildren 做一个映射表用于快速查找
+      const keyToNewIndexMap: Map<PropertyKey, number> = new Map()
+      for (let i = s2; i <= tail2; i++) {
+        keyToNewIndexMap.set((vnodeList2[i] as VNode).key, i)
+      }
+      console.log('renderer.ts-patchKeyedChildren-keyToNewIndexMap: ', keyToNewIndexMap)
+
+      // 5.2 看老的是否在新的里面，老的没有就删除，有的话就更新
+      for (let i = s1; i <= tail1; i++) {
+        const vnode = vnodeList1[i] as VNode
+        const indexInNew = keyToNewIndexMap.get(vnode?.key)
+        if (indexInNew === undefined) {
+          // 如果新的里面找不到则说明老的有的要删除
+          unmount(vnode)
+        } else {
+          patch(vnode, vnodeList2[indexInNew] as VNode, el)
+        }
+      }
+
+      // 5.3 上面虽然将老的更新了， 但是顺序可能不对， 而且还可能还有新建的元素
+      const toBePatchedLength = tail2 - s2 + 1 // [e d c h]的长度
+      for (let i = toBePatchedLength - 1; i >= 0; i--) {
+        const index = s2 + i // [e d c h]倒序在vnodeList2中的下标
+        const anchor = (vnodeList2[index + 1] as VNode)?.el
+        const vnode = vnodeList2[index] as VNode
+        if (!vnode.el) {
+          // 如果vnode.el不存在，就说明这个vnode是新建的，还从来没有渲染到页面中。那么就插入
+          patch(null, vnode, el, anchor)
+        } else {
+          // 如果vnode.el存在，说明在上一步中已经patch了，这时候就移动它的位置
+          hostInsert(vnode.el, el, anchor) // 底层的insertBefore()会判断给定的节点是否已经存在于文档中， 如果是，则会将其从当前位置移动到新位置。所以这个方法也能当move用
         }
       }
     }

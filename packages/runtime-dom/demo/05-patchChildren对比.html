@@ -64,9 +64,9 @@
     {
       id: 'array-to-array',
       title: '数组 → 数组（全量 diff）',
-      desc: '旧为 [A,B,C]，新为 [B,A,D]（官方会 diff；当前实现仅 log，不变更）',
+      desc: '旧为 [A,B,C]，新为 [B,A,D]',
       makeInit: (h) => h('ul', [ h('li',{key:'a'},'A'), h('li',{key:'b'},'B'), h('li',{key:'c'},'C') ]),
-      makeNext: (h) => h('ul', [ h('li',{key:'b'},'B'), h('li',{key:'a'},'A'), h('li',{key:'d'},'D') ]),
+      makeNext: (h) => h('ul', [ h('li',{key:'b'},'B!'), h('li',{key:'a'},'A!'), h('li',{key:'d'},'D!') ]),
     },
     {
       id: 'array-to-null',
