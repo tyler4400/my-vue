@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <title>05-patchKeyedChildren 对比（官方 vs 自定义 renderCustom/hCustom）</title>
   <style>
-    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; }
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,monospace; }
     #controls { padding: 12px; border-bottom: 1px solid #e5e7eb; position: sticky; top: 0; background: #fff; z-index: 100;}
     #controls button { margin-right: 8px; padding: 6px 10px; border: 1px solid #d1d5db; background: #f9fafb; border-radius: 6px; cursor: pointer; }
     #controls button:focus { outline: 2px solid #2563eb; outline-offset: 2px; }
@@ -23,7 +23,7 @@
 <body>
 <div id="controls" role="region" aria-label="说明">
   <div style="font-weight:600; margin-bottom:6px;">patchKeyedChildren 各情形对比（左：官方 render/h，右：自定义 renderCustom/hCustom）</div>
-  <div style="color:#6b7280; font-size:12px;">每条用例点击“渲染初始/渲染更新”观察差异；特别留意 “数组→数组（官方 diff、自定义仅 log）” 与 “文本→空（官方清空、自定义可能不变）”。</div>
+  <div style="color:#6b7280; font-size:12px;">每条用例点击“渲染初始/渲染更新”观察差异。</div>
 </div>
 
 <main id="root"></main>
@@ -36,7 +36,7 @@
     {
       id: 'same-head',
       title: '头部一样',
-      desc: '旧为 [A,B,C]，新为 [A,B,D,E]',
+      desc: '旧为 [A,B,C]，新为 [A,B,C,D]。 结束时指针位置：3 2 3',
       makeInit: (h) => h('ul', [
         h('li',{key:'a'},'A'),
         h('li',{key:'b'},'B'),
@@ -45,14 +45,14 @@
       makeNext: (h) => h('ul', [
         h('li',{key:'a'},'A！'),
         h('li',{key:'b'},'B！'),
-        h('li',{key:'d'},'D！'),
-        h('li',{key:'e'},'E！')
+        h('li',{key:'c'},'C！'),
+        h('li',{key:'d'},'D！')
       ]),
     },
     {
       id: 'same-tail',
       title: '尾部一样',
-      desc: '旧为 [C,B,A]，新为 [E,D,B,A]',
+      desc: '旧为 [C,B,A]，新为 [E,D,C,B,A]。结束时指针位置： 0 -1 1',
       makeInit: (h) => h('ul', [
         h('li',{key:'c'},'C'),
         h('li',{key:'b'},'B'),
@@ -61,6 +61,7 @@
       makeNext: (h) => h('ul', [
         h('li',{key:'e'},'E！'),
         h('li',{key:'d'},'D！'),
+        h('li',{key:'c'},'C！'),
         h('li',{key:'b'},'B！'),
         h('li',{key:'a'},'A！'),
       ]),

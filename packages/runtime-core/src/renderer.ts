@@ -1,6 +1,7 @@
 import {
   Data,
   HostElement,
+  HostNode,
   MountChildrenFn,
   Renderer,
   RendererOptions,
@@ -55,7 +56,7 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
     for (let i = 0; i < children.length; i++) {
       const child = children[i]
       // todo 处理 child别的类型，暂时都按照vnode处理，child还可能是string
-      console.log('渲染子元素', child)
+      // console.log('渲染子元素', child)
       patch(null, child as VNode, container)
     }
   }
@@ -71,9 +72,9 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
     }
   }
 
-  const mountElement = (vnode: VNode, container: HostElement) => {
+  const mountElement = (vnode: VNode, container: HostElement, anchor: HostNode) => {
     const { type, children, props, shapeFlag } = vnode
-    console.log('渲染的vnode', vnode, shapeFlag)
+    // console.log('渲染的vnode', vnode, shapeFlag)
     const el = hostCreateElement(type as string)
     vnode.el = el // 让vnode指向真实的el // todo 之前在 mountChildren的时候 未考虑string， 如果这里的vnode是字符串， 那么这一行就会保存， string是基本变量， 没有属性
     if (props) {
@@ -94,18 +95,18 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
       mountChildren(children as VNodeArrayChildren, el)
     }
 
-    hostInsert(el, container)
+    hostInsert(el, container, anchor)
   }
 
   const unmount = (vnode: VNode) => {
     hostRemove(vnode.el)
   }
 
-  const patch = (lastVnode: VNode | null, newVnode: VNode, container: HostElement) => {
+  const patch = (lastVnode: VNode | null, newVnode: VNode, container: HostElement, anchor: HostNode = null) => {
     if (lastVnode === newVnode) return
     if (lastVnode === null) {
       // lastVnode不存在，新建
-      mountElement(newVnode, container)
+      mountElement(newVnode, container, anchor)
       return
     }
     if (isSameVnode(lastVnode, newVnode)) {
@@ -116,7 +117,7 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
       console.log('lastVnode 存在， last和new指向不相同，直接移除老的dom元素,初始化新的dom元素', lastVnode, newVnode)
       unmount(lastVnode)
       lastVnode = null
-      mountElement(newVnode, container)
+      mountElement(newVnode, container, anchor)
     }
   }
 
@@ -218,14 +219,14 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
    *  2
    */
   const patchKeyedChildren = (vnodeList1: VNodeArrayChildren, vnodeList2: VNodeArrayChildren, el: HostElement) => {
-    let headP = 0 // 开始比对的头索引
-    let tailP1 = vnodeList1.length - 1 // 第一个数组的尾部索引
-    let tailP2 = vnodeList2.length - 1 // 第二个数组的尾部索引
+    let head = 0 // 开始比对的头索引
+    let tail1 = vnodeList1.length - 1 // 第一个数组的尾部索引
+    let tail2 = vnodeList2.length - 1 // 第二个数组的尾部索引
 
     // 先从头diff一遍，
-    while (headP <= tailP1 && headP <= tailP2) {
-      const node1 = vnodeList1[headP] as VNode
-      const node2 = vnodeList2[headP] as VNode
+    while (head <= tail1 && head <= tail2) {
+      const node1 = vnodeList1[head] as VNode
+      const node2 = vnodeList2[head] as VNode
       if (isSameVnode(node1, node2)) {
         patch(node1, node2, el)
       } else {
@@ -235,23 +236,36 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
          */
         break
       }
-      headP++
+      head++
     }
-    console.log('先从头部diff一遍，结束时此时头尾指针所处位置', headP, tailP1, tailP2)
+    console.log('先从头部diff一遍，结束时此时头尾指针所处位置', head, tail1, tail2)
 
     // 再从尾部diff一遍。 减少比对范围，增加复用范围。
-    while (headP <= tailP1 && headP <= tailP2) {
-      const node1 = vnodeList1[tailP1] as VNode
-      const node2 = vnodeList2[tailP2] as VNode
+    while (head <= tail1 && head <= tail2) {
+      const node1 = vnodeList1[tail1] as VNode
+      const node2 = vnodeList2[tail2] as VNode
       if (isSameVnode(node1, node2)) {
         patch(node1, node2, el)
       } else {
         break
       }
-      tailP1--
-      tailP2--
+      tail1--
+      tail2--
     }
-    console.log('再从尾部diff一遍，结束时此时头尾指针所处位置', headP, tailP1, tailP2)
+    console.log('再从尾部diff一遍，结束时此时头尾指针所处位置', head, tail1, tail2)
+
+    if (head > tail1) {
+      if (head <= tail2) {
+        // 新节点单纯比旧节点多的时候（中间是一样的， 不管是尾多还是头多），肯定是 ```head > tail1 && head <= tail2```
+        // 此时，head到tail2的部分就是新增的部分，我们把它们patch到tail2的下一位之前
+        const nextPos = tail2 + 1
+        const anchor = (vnodeList2[nextPos] as VNode)?.el
+        while (head <= tail2) {
+          patch(null, vnodeList2[head] as VNode, el, anchor)
+          head++
+        }
+      }
+    }
   }
 
   /**
