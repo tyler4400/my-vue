@@ -224,6 +224,9 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
     let tail2 = vnodeList2.length - 1 // 第二个数组的尾部索引
 
     // 先从头diff一遍，
+    // 1. sync from start
+    // (a b) c
+    // (a b) d e
     while (head <= tail1 && head <= tail2) {
       const node1 = vnodeList1[head] as VNode
       const node2 = vnodeList2[head] as VNode
@@ -241,6 +244,9 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
     console.log('先从头部diff一遍，结束时此时头尾指针所处位置', head, tail1, tail2)
 
     // 再从尾部diff一遍。 减少比对范围，增加复用范围。
+    // 2. sync from end
+    // a (b c)
+    // d e (b c)
     while (head <= tail1 && head <= tail2) {
       const node1 = vnodeList1[tail1] as VNode
       const node2 = vnodeList2[tail2] as VNode
@@ -254,6 +260,13 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
     }
     console.log('再从尾部diff一遍，结束时此时头尾指针所处位置', head, tail1, tail2)
 
+    // 3. common sequence + mount
+    // (a b)
+    // (a b) c
+    // i = 2, e1 = 1, e2 = 2
+    // (a b)
+    // c (a b)
+    // i = 0, e1 = -1, e2 = 0
     if (head > tail1) {
       if (head <= tail2) {
         // 新节点单纯比旧节点多的时候（中间是一样的， 不管是尾多还是头多），肯定是 ```head > tail1 && head <= tail2```
@@ -262,6 +275,22 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
         const anchor = (vnodeList2[nextPos] as VNode)?.el
         while (head <= tail2) {
           patch(null, vnodeList2[head] as VNode, el, anchor)
+          head++
+        }
+      }
+    }
+
+    // 4. common sequence + unmount
+    // (a b) c
+    // (a b)
+    // i = 2, e1 = 2, e2 = 1
+    // a (b c)
+    // (b c)
+    // i = 0, e1 = 0, e2 = -1
+    if (head > tail2) {
+      if (head <= tail1) {
+        while (head <= tail1) {
+          unmount(vnodeList1[head] as VNode)
           head++
         }
       }
