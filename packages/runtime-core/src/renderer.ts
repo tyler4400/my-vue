@@ -11,6 +11,7 @@ import {
 } from './types'
 import { isArray, isArrayChildren, isTextChildren } from '@vue/shared'
 import { isSameVnode } from './createVnode'
+import getSequence from './seq'
 
 export function createRenderer(renderOptions: RendererOptions): Renderer {
   const {
@@ -128,8 +129,9 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
    * @param newVnode
    * @param container 实际没用到
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const patchElement = (lastVnode: VNode, newVnode: VNode, container: HostElement) => {
-    console.log('进入到当前方法的，说明新旧vnode都存在，且新旧vnode的type和key都相同: ', lastVnode, newVnode, container)
+    // console.log('进入到当前方法的，说明新旧vnode都存在，且新旧vnode的type和key都相同: ', lastVnode, newVnode, container)
     // 复用 dom元素， 也就是el。 然后对属性和child进行更新
     const el = (newVnode.el = lastVnode.el)
 
@@ -314,7 +316,10 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
       for (let i = s2; i <= tail2; i++) {
         keyToNewIndexMap.set((vnodeList2[i] as VNode).key, i)
       }
-      console.log('renderer.ts-patchKeyedChildren-keyToNewIndexMap: ', keyToNewIndexMap)
+      console.log('key是新node的key，value是位置索引: ', keyToNewIndexMap)
+
+      const toBePatchedLength = tail2 - s2 + 1 // [e d c h]的长度
+      const newIndexToOldMapIndex = new Array(toBePatchedLength).fill(0) // 中间的新的节点列表[e d c h]，他们对应的老节点的列表的索引
 
       // 5.2 看老的是否在新的里面，老的没有就删除，有的话就更新
       for (let i = s1; i <= tail1; i++) {
@@ -324,12 +329,17 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
           // 如果新的里面找不到则说明老的有的要删除
           unmount(vnode)
         } else {
+          newIndexToOldMapIndex[indexInNew - s2] = i // [4, 2, 3, 0]
           patch(vnode, vnodeList2[indexInNew] as VNode, el)
         }
       }
+      console.log('中间的新的节点列表，在老节点中的位置，如果新出现的位置总是0', newIndexToOldMapIndex)
+
+      const increasingSeq = getSequence(newIndexToOldMapIndex)
+      console.log('LIS: ', increasingSeq)
+      let j = increasingSeq.length - 1 // 索引
 
       // 5.3 上面虽然将老的更新了， 但是顺序可能不对， 而且还可能还有新建的元素
-      const toBePatchedLength = tail2 - s2 + 1 // [e d c h]的长度
       for (let i = toBePatchedLength - 1; i >= 0; i--) {
         const index = s2 + i // [e d c h]倒序在vnodeList2中的下标
         const anchor = (vnodeList2[index + 1] as VNode)?.el
@@ -338,8 +348,13 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
           // 如果vnode.el不存在，就说明这个vnode是新建的，还从来没有渲染到页面中。那么就插入
           patch(null, vnode, el, anchor)
         } else {
-          // 如果vnode.el存在，说明在上一步中已经patch了，这时候就移动它的位置
-          hostInsert(vnode.el, el, anchor) // 底层的insertBefore()会判断给定的节点是否已经存在于文档中， 如果是，则会将其从当前位置移动到新位置。所以这个方法也能当move用
+          if (i === increasingSeq[j]) {
+            // 做了diff算法的优化.
+            j--
+          } else {
+            // 如果vnode.el存在，说明在上一步中已经patch了，这时候就移动它的位置
+            hostInsert(vnode.el, el, anchor) // 底层的insertBefore()会判断给定的节点是否已经存在于文档中， 如果是，则会将其从当前位置移动到新位置。所以这个方法也能当move用
+          }
         }
       }
     }
