@@ -10,7 +10,7 @@ import {
   VNodeArrayChildren,
 } from './types'
 import { isArray, isArrayChildren, isTextChildren } from '@vue/shared'
-import { isSameVnode } from './createVnode'
+import { isSameVnode, Text } from './createVnode'
 import getSequence from './seq'
 
 export function createRenderer(renderOptions: RendererOptions): Renderer {
@@ -18,9 +18,7 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
     insert: hostInsert,
     remove: hostRemove,
     createElement: hostCreateElement,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     createText: hostCreateText,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     setText: hostSetText,
     setElementText: hostSetElementText,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -103,22 +101,44 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
     hostRemove(vnode.el)
   }
 
+  const processText = (lastVnode: VNode | null, newVnode: VNode, container: HostElement) => {
+    if (lastVnode === null) {
+      newVnode.el = hostCreateText(newVnode.children as string)
+      hostInsert(newVnode.el, container)
+    } else {
+      const el = (newVnode.el = lastVnode.el)
+      if (lastVnode.children !== newVnode.children) {
+        hostSetText(el, newVnode.children as string)
+      }
+    }
+  }
+
+  const processElement = (
+    lastVnode: VNode | null,
+    newVnode: VNode,
+    container: HostElement,
+    anchor: HostNode = null,
+  ) => {
+    if (lastVnode === null) {
+      mountElement(newVnode, container, anchor)
+    } else {
+      patchElement(lastVnode, newVnode, container)
+    }
+  }
+
   const patch = (lastVnode: VNode | null, newVnode: VNode, container: HostElement, anchor: HostNode = null) => {
     if (lastVnode === newVnode) return
-    if (lastVnode === null) {
-      // lastVnode不存在，新建
-      mountElement(newVnode, container, anchor)
-      return
-    }
-    if (isSameVnode(lastVnode, newVnode)) {
-      // lastVnode 存在， last和new指向也相同，那就要更新属性props和child
-      patchElement(lastVnode, newVnode, container)
-    } else {
-      // lastVnode 存在， last和new指向不相同，直接移除老的dom元素,初始化新的dom元素
-      console.log('lastVnode 存在， last和new指向不相同，直接移除老的dom元素,初始化新的dom元素', lastVnode, newVnode)
+    if (lastVnode && !isSameVnode(lastVnode, newVnode)) {
       unmount(lastVnode)
       lastVnode = null
-      mountElement(newVnode, container, anchor)
+    }
+    const { type } = newVnode
+    switch (type) {
+      case Text:
+        processText(lastVnode, newVnode, container)
+        break
+      default:
+        processElement(lastVnode, newVnode, container, anchor) // 对元素（区别于组件）处理
     }
   }
 
@@ -373,10 +393,9 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
     } else {
       // 将虚拟节点变成真实节点进行渲染
       patch(container._vnode || null, vnode, container)
+      // _vnode保存上次的vnode， 做对比用。  vnode.el和container._vnode互为引用
+      container._vnode = vnode
     }
-
-    // _vnode保存上次的vnode， 做对比用。  vnode.el和container._vnode互为引用
-    container._vnode = vnode
   }
 
   return {

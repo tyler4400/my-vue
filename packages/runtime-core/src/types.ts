@@ -1,3 +1,5 @@
+import { Text } from './createVnode'
+
 export interface RendererOptions {
   patchProp(
     el: HostElement,
@@ -65,7 +67,7 @@ export type VNodeTypes =
   | VNode
   | 'Component'
   | 'ClassComponent'
-  | 'Text'
+  | typeof Text
   | 'Static'
   | 'Comment'
   | 'Fragment'

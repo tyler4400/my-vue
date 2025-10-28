@@ -1,6 +1,8 @@
 import { VNode, VNodeArrayChildren, VNodeProps, VNodeTypes } from './types'
 import { isArray, isString, ShapeFlags } from '@vue/shared'
 
+export const Text = Symbol.for('v-txt')
+
 export function createVnode(
   type: VNodeTypes,
   props: VNodeProps = null,
