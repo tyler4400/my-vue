@@ -21,11 +21,12 @@ export function createVnode(
     shapeFlag,
   }
   if (children !== null) {
+    // compiled element vnode - if children is passed, only possible types are
+    // string or Array.
     if (isArray(children)) {
       vnode.shapeFlag |= ShapeFlags.ARRAY_CHILDREN
     } else {
-      // todo 暂时只有array 和 text两种，没有内置组件等
-      children = String(children)
+      vnode.children = String(children)
       vnode.shapeFlag |= ShapeFlags.TEXT_CHILDREN
     }
   }
