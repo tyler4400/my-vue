@@ -10,7 +10,7 @@ import {
   VNodeArrayChildren,
 } from './types'
 import { isArray, isArrayChildren, isTextChildren } from '@vue/shared'
-import { isSameVnode, Text } from './createVnode'
+import { Fragment, isSameVnode, Text } from './createVnode'
 import getSequence from './seq'
 
 export function createRenderer(renderOptions: RendererOptions): Renderer {
@@ -98,7 +98,11 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
   }
 
   const unmount = (vnode: VNode) => {
-    hostRemove(vnode.el)
+    if (vnode.type === Fragment) {
+      unmountChildren(vnode.children as VNodeArrayChildren)
+    } else {
+      hostRemove(vnode.el)
+    }
   }
 
   const processText = (lastVnode: VNode | null, newVnode: VNode, container: HostElement) => {
@@ -110,6 +114,14 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
       if (lastVnode.children !== newVnode.children) {
         hostSetText(el, newVnode.children as string)
       }
+    }
+  }
+
+  const processFragment = (lastVnode: VNode | null, newVnode: VNode, container: HostElement) => {
+    if (lastVnode === null) {
+      mountChildren(newVnode.children as VNodeArrayChildren, container)
+    } else {
+      patchChildren(lastVnode, newVnode, container)
     }
   }
 
@@ -136,6 +148,9 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
     switch (type) {
       case Text:
         processText(lastVnode, newVnode, container)
+        break
+      case Fragment:
+        processFragment(lastVnode, newVnode, container)
         break
       default:
         processElement(lastVnode, newVnode, container, anchor) // 对元素（区别于组件）处理

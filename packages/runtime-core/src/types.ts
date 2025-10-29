@@ -1,4 +1,4 @@
-import { Text } from './createVnode'
+import { Fragment, Text } from './createVnode'
 
 export interface RendererOptions {
   patchProp(
@@ -70,7 +70,7 @@ export type VNodeTypes =
   | typeof Text
   | 'Static'
   | 'Comment'
-  | 'Fragment'
+  | typeof Fragment
   | 'Teleport'
   | 'TeleportImpl'
   | 'Suspense'

@@ -29,19 +29,55 @@
 <main id="root"></main>
 
 <script type="module">
-  import { render, h, Text } from "../../../node_modules/vue/dist/vue.runtime.esm-browser.js";
-  import { render as renderCustom, h as hCustom, Text as TextMy } from '../dist/runtime-dom.esm.js'
+  import {
+    render as renderVue,
+    h as hVue,
+    Text as TextVue,
+    Fragment as FragmentVue,
+  } from "../../../node_modules/vue/dist/vue.runtime.esm-browser.js";
+  import {
+    render as renderCustom,
+    h as hCustom,
+    Text as TextCustom,
+    Fragment as FragmentCustom,
+  } from '../dist/runtime-dom.esm.js'
+
+  let render,h,Text,Fragment
+  function changeAPI(vueOrCustom) {
+    if (vueOrCustom === 'vue') {
+      render = renderVue;
+      h = hVue
+      Text = TextVue
+      Fragment = FragmentVue
+    } else {
+      render = renderCustom
+      h = hCustom
+      Text = TextCustom
+      Fragment = FragmentCustom
+    }
+  }
 
   const cases = [
     {
       id: 'Text',
       title: '渲染Text节点',
       desc: '',
-      makeInit: (h, Text) => h(Text, '显式 Text 节点'),
-      makeNext: (h, Text) => h('ul',[
+      makeInit: () => h(Text, '显式 Text 节点'),
+      makeNext: () => h('ul',[
         h(Text, '作为children之一'),
         h('p', { class: 'p2', style: { color: 'purple' } }, '段落二'),
         h('ul', { class: 'list' }, h(Text, '嵌套text节点作为唯一children')),
+      ]),
+    },
+    {
+      id: 'Fragment',
+      title: '渲染Fragment节点',
+      desc: 'Fragment的children不能是纯字符串',
+      makeInit: () => h(Fragment, [h('div', 'children是数组1 '), h('a', 'children是数组2 ')]),
+      makeNext: () => h('ul',[
+        h(Fragment, h(Text, 'Fragment的children不能是纯字符串')),
+        h('p', { class: 'p2', style: { color: 'purple' } }, '段落二'),
+        h(Fragment, [h('div', 'children是数组1 '), h('a', 'children是数组2 ')]),
       ]),
     },
   ]
@@ -110,10 +146,13 @@
   }
 
   function handleRender(which, c) {
-    const vnodeApp = (which === 'init' ? c.makeInit(h, Text) : c.makeNext(h, Text))
-    const vnodeCustom = (which === 'init' ? c.makeInit(hCustom, TextMy) : c.makeNext(hCustom, TextMy))
+    changeAPI('vue')
+    const vnodeApp = (which === 'init' ? c.makeInit() : c.makeNext())
     render(vnodeApp, document.getElementById(`app-${c.id}`))
-    renderCustom(vnodeCustom, document.getElementById(`custom-${c.id}`))
+
+    changeAPI('custom')
+    const vnodeCustom = (which === 'init' ? c.makeInit() : c.makeNext())
+    render(vnodeCustom, document.getElementById(`custom-${c.id}`))
   }
 
   function mountAll() {

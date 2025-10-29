@@ -2,6 +2,7 @@ import { VNode, VNodeArrayChildren, VNodeProps, VNodeTypes } from './types'
 import { isArray, isString, ShapeFlags } from '@vue/shared'
 
 export const Text = Symbol.for('v-txt')
+export const Fragment = Symbol.for('v-fgt')
 
 export function createVnode(
   type: VNodeTypes,
