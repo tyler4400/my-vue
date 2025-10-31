@@ -43,4 +43,4 @@ export const isComponentShouldKeepAlive = (type: number) => ShapeFlags.COMPONENT
 
 export const isComponentKeptAlive = (type: number) => ShapeFlags.COMPONENT_KEPT_ALIVE & type
 
-export const isCOMPONENT = (type: number) => ShapeFlags.COMPONENT & type
+export const isComponent = (type: number) => ShapeFlags.COMPONENT & type

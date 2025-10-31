@@ -9,7 +9,7 @@ import {
   VNode,
   VNodeArrayChildren,
 } from './types'
-import { isArray, isArrayChildren, isTextChildren } from '@vue/shared'
+import { isArray, isArrayChildren, isComponent, isElement, isTextChildren } from '@vue/shared'
 import { Fragment, isSameVnode, Text } from './createVnode'
 import getSequence from './seq'
 
@@ -75,7 +75,7 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
     const { type, children, props, shapeFlag } = vnode
     // console.log('渲染的vnode', vnode, shapeFlag)
     const el = hostCreateElement(type as string)
-    vnode.el = el // 让vnode指向真实的el // todo 之前在 mountChildren的时候 未考虑string， 如果这里的vnode是字符串， 那么这一行就会保存， string是基本变量， 没有属性
+    vnode.el = el // 让vnode指向真实的el // todo 之前在 mountChildren的时候 未考虑string， 如果这里的vnode是字符串， 那么这一行就会报错， string是基本变量， 没有属性
     if (props) {
       for (const key in props) {
         hostPatchProp(el, key, null, props[key])
@@ -95,6 +95,11 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
     }
 
     hostInsert(el, container, anchor)
+  }
+
+  // 组件可以基于自己的状态重新渲染，effect
+  const mountComponent = (vnode: VNode, container: HostElement, anchor: HostNode) => {
+    // const { type, children, props, shapeFlag } = vnode
   }
 
   const unmount = (vnode: VNode) => {
@@ -138,13 +143,26 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
     }
   }
 
+  const processComponent = (
+    lastVnode: VNode | null,
+    newVnode: VNode,
+    container: HostElement,
+    anchor: HostNode = null,
+  ) => {
+    if (lastVnode === null) {
+      mountComponent(newVnode, container, anchor)
+    } else {
+      console.log('组件更新 todo')
+    }
+  }
+
   const patch = (lastVnode: VNode | null, newVnode: VNode, container: HostElement, anchor: HostNode = null) => {
     if (lastVnode === newVnode) return
     if (lastVnode && !isSameVnode(lastVnode, newVnode)) {
       unmount(lastVnode)
       lastVnode = null
     }
-    const { type } = newVnode
+    const { type, shapeFlag } = newVnode
     switch (type) {
       case Text:
         processText(lastVnode, newVnode, container)
@@ -153,7 +171,14 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
         processFragment(lastVnode, newVnode, container)
         break
       default:
-        processElement(lastVnode, newVnode, container, anchor) // 对元素（区别于组件）处理
+        if (isElement(shapeFlag)) {
+          // 对元素（区别于组件）处理
+          processElement(lastVnode, newVnode, container, anchor)
+        }
+        if (isComponent(shapeFlag)) {
+          // 对组件的处理，Vue3中函数式组件已经废弃了，没有性能节约
+          processComponent(lastVnode, newVnode, container, anchor)
+        }
     }
   }
 

@@ -1,5 +1,5 @@
 import { VNode, VNodeArrayChildren, VNodeProps, VNodeTypes } from './types'
-import { isArray, isString, ShapeFlags } from '@vue/shared'
+import { isArray, isObject, isString, ShapeFlags } from '@vue/shared'
 
 export const Text = Symbol.for('v-txt')
 export const Fragment = Symbol.for('v-fgt')
@@ -9,7 +9,11 @@ export function createVnode(
   props: VNodeProps = null,
   children: VNodeArrayChildren | string | null = null,
 ): VNode {
-  const shapeFlag = isString(type) ? ShapeFlags.ELEMENT : 0
+  const shapeFlag = isString(type)
+    ? ShapeFlags.ELEMENT // Dom元素
+    : isObject(type)
+      ? ShapeFlags.STATEFUL_COMPONENT // vue组件
+      : 0
 
   const vnode: VNode = {
     __v_isVnode: true,

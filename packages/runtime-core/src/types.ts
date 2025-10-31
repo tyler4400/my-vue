@@ -65,7 +65,7 @@ export type Data = Record<string, any>
 export type VNodeTypes =
   | string
   | VNode
-  | 'Component'
+  | Component
   | 'ClassComponent'
   | typeof Text
   | 'Static'
@@ -90,3 +90,5 @@ export type VNodeRef =
 
 export type VNodeArrayChildren = Array<'VNodeArrayChildren' | VNodeChildAtom>
 export type VNodeChildAtom = VNode | string | number | boolean | null | undefined | void
+
+type Component = any
