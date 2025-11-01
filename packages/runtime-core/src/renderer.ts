@@ -1,4 +1,5 @@
 import {
+  Component,
   Data,
   HostElement,
   HostNode,
@@ -12,6 +13,7 @@ import {
 import { isArray, isArrayChildren, isComponent, isElement, isTextChildren } from '@vue/shared'
 import { Fragment, isSameVnode, Text } from './createVnode'
 import getSequence from './seq'
+import { reactive, ReactiveEffect } from '@vue/reactivity3.4'
 
 export function createRenderer(renderOptions: RendererOptions): Renderer {
   const {
@@ -98,8 +100,37 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
   }
 
   // 组件可以基于自己的状态重新渲染，effect
-  const mountComponent = (vnode: VNode, container: HostElement, anchor: HostNode) => {
-    // const { type, children, props, shapeFlag } = vnode
+  const mountComponent = (newVnode: VNode, container: HostElement, anchor: HostNode) => {
+    const { data, render } = newVnode.type as Component
+    const state = reactive(data())
+
+    const instance = {
+      state,
+      vnode: newVnode,
+      subTree: null, // 子虚拟dom
+      isMounted: false, // 组件是否挂载
+      update: null, // 组件更新函数
+    }
+
+    const componentUpdateFn = () => {
+      const subTree = render.call(state, state) // 两个参数分别为render函数中的this指向，和proxy参数
+      if (!instance.isMounted) {
+        // 首次挂载。 直接patch
+        instance.subTree = subTree
+        patch(null, subTree, container, anchor)
+        instance.isMounted = true
+      } else {
+        // 非首次就要对比了
+        patch(instance.subTree, subTree, container, anchor)
+        instance.subTree = subTree
+      }
+    }
+
+    const effect = new ReactiveEffect(componentUpdateFn, () => update())
+    const update = (instance.update = () => {
+      effect.run()
+    })
+    update()
   }
 
   const unmount = (vnode: VNode) => {

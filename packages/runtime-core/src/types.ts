@@ -91,4 +91,10 @@ export type VNodeRef =
 export type VNodeArrayChildren = Array<'VNodeArrayChildren' | VNodeChildAtom>
 export type VNodeChildAtom = VNode | string | number | boolean | null | undefined | void
 
-type Component = any
+// 选项式组件基本构成
+export type Component = {
+  data: () => object
+  render: (proxy: State) => VNode
+}
+
+export type State = any

@@ -22,8 +22,12 @@
 </head>
 <body>
 <div id="controls" role="region" aria-label="说明">
-  <div style="font-weight:600; margin-bottom:6px;">patchKeyedChildren 各情形对比（左：官方 render/h，右：自定义 render，h，Text）</div>
-  <div style="color:#6b7280; font-size:12px;">每条用例点击“渲染初始/渲染更新”观察差异。</div>
+  <div style="font-weight:600; margin-bottom:6px;">processXXX各种情形对比 各情形对比（左：官方 API，右：自定义 API）</div>
+  <div style="color:#6b7280; font-size:12px;">渲染初始和渲染更新会自动切换API环境，但后续点击时间需手动切换环境。否则环境会错乱</div>
+  <div>
+    <button onclick="changeAPI('vue')">切换为官方api环境</button>
+    <button onclick="changeAPI('custom')">切换为自定义api环境</button>
+  </div>
 </div>
 
 <main id="root"></main>
@@ -56,6 +60,25 @@
       Fragment = FragmentCustom
     }
   }
+  window.changeAPI = changeAPI
+
+  const VueComponent = {
+    data() {
+      return {
+        name: 'marry',
+        age: 18
+      }
+    },
+    render(proxy) {
+      return h(Fragment, [
+        h('h1', 'my name is ' + this.name),
+        h(Text, 'my age is ' + proxy.age), // proxy === age
+        h('button', { onClick: () => {
+          proxy.age++
+          }}, 'grow up'),
+      ])
+    }
+  }
 
   const cases = [
     {
@@ -74,6 +97,17 @@
       title: '渲染Fragment节点',
       desc: 'Fragment的children不能是纯字符串',
       makeInit: () => h(Fragment, [h('div', 'children是数组1 '), h('a', 'children是数组2 ')]),
+      makeNext: () => h('ul',[
+        h(Fragment, h(Text, 'Fragment的children不能是纯字符串')),
+        h('p', { class: 'p2', style: { color: 'purple' } }, '段落二'),
+        h(Fragment, [h('div', 'children是数组1 '), h('a', 'children是数组2 ')]),
+      ]),
+    },
+    {
+      id: 'Component',
+      title: '渲染Component',
+      desc: '',
+      makeInit: () => h(VueComponent),
       makeNext: () => h('ul',[
         h(Fragment, h(Text, 'Fragment的children不能是纯字符串')),
         h('p', { class: 'p2', style: { color: 'purple' } }, '段落二'),
@@ -127,7 +161,7 @@
     right.className = 'panel'
     const rightLabel = document.createElement('div')
     rightLabel.className = 'label'
-    rightLabel.textContent = '自定义 renderCustom/hCustom'
+    rightLabel.textContent = '自定义'
     const rightContent = document.createElement('div')
     rightContent.className = 'content'
     rightContent.id = `custom-${c.id}`
