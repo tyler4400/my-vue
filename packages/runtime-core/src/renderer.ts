@@ -14,6 +14,7 @@ import { isArray, isArrayChildren, isComponent, isElement, isTextChildren } from
 import { Fragment, isSameVnode, Text } from './createVnode'
 import getSequence from './seq'
 import { reactive, ReactiveEffect } from '@vue/reactivity3.4'
+import { queueJob } from './scheduler'
 
 export function createRenderer(renderOptions: RendererOptions): Renderer {
   const {
@@ -113,6 +114,7 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
     }
 
     const componentUpdateFn = () => {
+      console.log('renderer.ts.115.mountComponent.componentUpdateFn: ', '执行了')
       const subTree = render.call(state, state) // 两个参数分别为render函数中的this指向，和proxy参数
       if (!instance.isMounted) {
         // 首次挂载。 直接patch
@@ -126,7 +128,7 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
       }
     }
 
-    const effect = new ReactiveEffect(componentUpdateFn, () => update())
+    const effect = new ReactiveEffect(componentUpdateFn, () => queueJob(update))
     const update = (instance.update = () => {
       effect.run()
     })
