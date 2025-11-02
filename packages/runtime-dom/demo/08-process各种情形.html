@@ -78,7 +78,7 @@
           }}, 'grow up'),
         h('button', { onClick: () => {
           proxy.age++
-          proxy.age++
+          proxy.age++ // 多次调用，会由一个全局微任务一次性flushing
           }}, 'grow up twice'),
       ])
     }
