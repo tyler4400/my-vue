@@ -1,4 +1,5 @@
 import { Fragment, Text } from './createVnode'
+import { SchedulerJob } from './scheduler'
 
 export interface RendererOptions {
   patchProp(
@@ -58,6 +59,7 @@ export interface VNode {
   key: PropertyKey | null // diff算法需要用到的key
   el: HostNode | null // DOM 虚拟节点对应的真实节点
   shapeFlag: number
+  component: ComponentInternalInstance | null
 }
 
 export type Data = Record<string, any>
@@ -95,6 +97,20 @@ export type VNodeChildAtom = VNode | string | number | boolean | null | undefine
 export type Component = {
   data: () => object
   render: (proxy: State) => VNode
+  props: Record<string, any>
 }
 
 export type State = any
+
+export interface ComponentInternalInstance {
+  state: State
+  vnode: VNode
+  subTree: VNode
+  isMounted: boolean
+  update: SchedulerJob
+  // 组件的props声明
+  propsOptions: Record<string, any>
+  props: Data
+  attrs: Data
+  component?: any // later
+}

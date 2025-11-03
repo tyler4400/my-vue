@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>09-组件的渲染（官方 vs 自定义）</title>
+  <style>
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,monospace; }
+    #controls { padding: 12px; border-bottom: 1px solid #e5e7eb; position: sticky; top: 0; background: #fff; z-index: 100;}
+    #controls button { margin-right: 8px; padding: 6px 10px; border: 1px solid #d1d5db; background: #f9fafb; border-radius: 6px; cursor: pointer; }
+    #controls button:focus { outline: 2px solid #2563eb; outline-offset: 2px; }
+    main { padding: 12px; }
+    .case { border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; margin-bottom: 14px; background: #fff; }
+    .case h3 { margin: 0 0 6px; font-size: 14px; color: #111827; }
+    .desc { color: #6b7280; font-size: 12px; margin-bottom: 8px; line-height: 1.4; }
+    .actions { margin-bottom: 8px; }
+    .actions button { margin-right: 6px; padding: 4px 8px; border: 1px solid #d1d5db; background: #f9fafb; border-radius: 6px; cursor: pointer; }
+    .row { display: flex; gap: 10px; }
+    .panel { flex: 1; border: 1px solid #e5e7eb; padding: 10px; min-height: 80px; background: #fafafa; position: relative; }
+    .panel .label { position: absolute; top: 6px; left: 8px; font-size: 12px; font-weight: 600; color: #374151; }
+    .panel .content { padding-top: 20px; }
+  </style>
+</head>
+<body>
+<div id="controls" role="region" aria-label="说明">
+  <div style="font-weight:600; margin-bottom:6px;">09-组件的渲染各种情形对比 各情形对比（左：官方 API，右：自定义 API）</div>
+  <div style="color:#6b7280; font-size:12px;">渲染初始和渲染更新会自动切换API环境，但后续点击事件需手动切换环境。否则环境会错乱</div>
+  <div>
+    <button onclick="changeAPI('vue')">切换为官方api环境</button>
+    <button onclick="changeAPI('custom')">切换为自定义api环境</button>
+  </div>
+</div>
+
+<main id="root"></main>
+
+<script type="module">
+  import {
+    render as renderVue,
+    h as hVue,
+    Text as TextVue,
+    Fragment as FragmentVue,
+  } from "../../../node_modules/vue/dist/vue.runtime.esm-browser.js";
+  import {
+    render as renderCustom,
+    h as hCustom,
+    Text as TextCustom,
+    Fragment as FragmentCustom,
+  } from '../dist/runtime-dom.esm.js'
+
+  let render,h,Text,Fragment
+  function changeAPI(vueOrCustom) {
+    if (vueOrCustom === 'vue') {
+      render = renderVue;
+      h = hVue
+      Text = TextVue
+      Fragment = FragmentVue
+    } else {
+      render = renderCustom
+      h = hCustom
+      Text = TextCustom
+      Fragment = FragmentCustom
+    }
+  }
+  window.changeAPI = changeAPI
+
+  const VueComponent = {
+    data() {
+      return {
+        name: 'marry',
+        age: 18
+      }
+    },
+    render(proxy) {
+      return h(Fragment, [
+        h('h1', 'my name is ' + this.name),
+        h(Text, 'my age is ' + proxy.age), // proxy === age
+        h('button', { onClick: () => {
+          proxy.age++
+          }}, 'grow up'),
+        h('button', { onClick: () => {
+          proxy.age++
+          proxy.age++ // 多次调用，会由一个全局微任务一次性flushing
+          }}, 'grow up twice'),
+      ])
+    }
+  }
+
+  const PropComponent = {
+    data() {
+      return {
+        name: 'marisol',
+        age: 18
+      }
+    },
+    props: {
+      name2: String,
+      age2: Number,
+    },
+    render(proxy) {
+      return h(Fragment, [
+        h('h1', 'my name is ' + this.name),
+        h(Text, 'my age is ' + proxy.age), // proxy === age
+        h('button', { onClick: () => {
+          proxy.age++
+          }}, 'grow up'),
+        h('button', { onClick: () => {
+          proxy.age++
+          proxy.age++ // 多次调用，会由一个全局微任务一次性flushing
+          }}, 'grow up twice'),
+      ])
+    }
+  }
+
+  const cases = [
+    {
+      id: 'queueJob',
+      title: '渲染Component',
+      desc: '组件的渲染更新时机 会被合并到同一个全局 queue，由那一个微任务回调一次性 flush',
+      makeInit: () => h(VueComponent),
+      makeNext: () => h('ul','nothing'),
+    },
+    {
+      id: 'PropComponent',
+      title: '组件接受参数props(未完成)',
+      desc: '当rawProps传递给组件时， 没有被组件的props声明的部分会成为attrs，声明的会成为props',
+      makeInit: () => h(PropComponent, { a: 1, b: 2, name2: 'pb', age2: 30 }),
+      makeNext: () => h('ul','nothing'),
+    },
+  ]
+
+  const $root = document.getElementById('root')
+
+  function createCaseSection(c) {
+    const section = document.createElement('section')
+    section.className = 'case'
+    section.setAttribute('data-id', c.id)
+
+    const h3 = document.createElement('h3')
+    h3.textContent = `${c.title}`
+
+    const desc = document.createElement('div')
+    desc.className = 'desc'
+    desc.textContent = c.desc
+
+    const actions = document.createElement('div')
+    actions.className = 'actions'
+    const btnInit = document.createElement('button')
+    btnInit.type = 'button'
+    btnInit.setAttribute('data-action', 'init')
+    btnInit.textContent = '渲染初始'
+    const btnUpdate = document.createElement('button')
+    btnUpdate.type = 'button'
+    btnUpdate.setAttribute('data-action', 'update')
+    btnUpdate.textContent = '渲染更新'
+    actions.appendChild(btnInit)
+    actions.appendChild(btnUpdate)
+
+    const row = document.createElement('div')
+    row.className = 'row'
+
+    const left = document.createElement('div')
+    left.className = 'panel'
+    const leftLabel = document.createElement('div')
+    leftLabel.className = 'label'
+    leftLabel.textContent = '官方'
+    const leftContent = document.createElement('div')
+    leftContent.className = 'content'
+    leftContent.id = `app-${c.id}`
+    left.appendChild(leftLabel)
+    left.appendChild(leftContent)
+
+    const right = document.createElement('div')
+    right.className = 'panel'
+    const rightLabel = document.createElement('div')
+    rightLabel.className = 'label'
+    rightLabel.textContent = '自定义'
+    const rightContent = document.createElement('div')
+    rightContent.className = 'content'
+    rightContent.id = `custom-${c.id}`
+    right.appendChild(rightLabel)
+    right.appendChild(rightContent)
+
+    row.appendChild(left)
+    row.appendChild(right)
+
+    section.appendChild(h3)
+    section.appendChild(desc)
+    section.appendChild(actions)
+    section.appendChild(row)
+
+    return section
+  }
+
+  function handleRender(which, c) {
+    changeAPI('vue')
+    const vnodeApp = (which === 'init' ? c.makeInit() : c.makeNext())
+    render(vnodeApp, document.getElementById(`app-${c.id}`))
+
+    changeAPI('custom')
+    const vnodeCustom = (which === 'init' ? c.makeInit() : c.makeNext())
+    render(vnodeCustom, document.getElementById(`custom-${c.id}`))
+  }
+
+  function mountAll() {
+    cases.forEach((c) => {
+      const section = createCaseSection(c)
+      $root.appendChild(section)
+
+      // 绑定按钮
+      section.querySelector('[data-action="init"]').addEventListener('click', () => handleRender('init', c))
+      section.querySelector('[data-action="update"]').addEventListener('click', () => handleRender('update', c))
+    })
+
+    // 默认全部渲染初始态
+    cases.forEach(c => handleRender('init', c))
+  }
+
+  mountAll()
+</script>
+</body>
+</html>

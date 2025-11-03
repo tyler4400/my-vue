@@ -1,3 +1,6 @@
+import { ComponentInternalInstance, Data } from './types'
+import { reactive } from '@vue/reactivity3.4'
+
 /**
  * 当rawProps传递给组件时， 没有被组件的props声明的部分会成为attrs，声明的会成为props
  * attrs不是响应式的。attrs变化不会驱动视图更新，但若视图更新时，会拿最新的attrs值。
@@ -6,7 +9,7 @@
  * @param instance
  * @param rawProps
  */
-export const initProps = (instance, rawProps) => {
+export const initProps = (instance: ComponentInternalInstance, rawProps: Data) => {
   const props = {}
   const attrs = {}
   const propsOptions = instance.propsOptions || {} // 组件中定义的

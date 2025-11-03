@@ -1,5 +1,6 @@
 import {
   Component,
+  ComponentInternalInstance,
   Data,
   HostElement,
   HostNode,
@@ -15,6 +16,7 @@ import { Fragment, isSameVnode, Text } from './createVnode'
 import getSequence from './seq'
 import { reactive, ReactiveEffect } from '@vue/reactivity3.4'
 import { queueJob } from './scheduler'
+import { initProps } from './component'
 
 export function createRenderer(renderOptions: RendererOptions): Renderer {
   const {
@@ -102,19 +104,30 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
 
   // 组件可以基于自己的状态重新渲染，effect
   const mountComponent = (newVnode: VNode, container: HostElement, anchor: HostNode) => {
-    const { data, render } = newVnode.type as Component
+    const { data, render, props: propsOptions } = newVnode.type as Component
     const state = reactive(data())
 
-    const instance = {
+    const instance: ComponentInternalInstance = {
       state,
       vnode: newVnode,
       subTree: null, // 子虚拟dom
       isMounted: false, // 组件是否挂载
       update: null, // 组件更新函数
+      props: {},
+      attrs: {},
+      propsOptions, // 组件的props声明
+      component: null,
     }
 
+    newVnode.component = instance
+    // 元素更新 n2.el = n1.el
+    // 组件更新 n2.component.subTree.el = n1.component.subTree.el
+
+    initProps(instance, newVnode.props)
+    console.log('组件实例: ', instance)
+
     const componentUpdateFn = () => {
-      console.log('renderer.ts.115.mountComponent.componentUpdateFn: ', '执行了')
+      console.log('组件更新了: ', instance)
       const subTree = render.call(state, state) // 两个参数分别为render函数中的this指向，和proxy参数
       if (!instance.isMounted) {
         // 首次挂载。 直接patch
