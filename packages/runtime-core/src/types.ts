@@ -113,4 +113,6 @@ export interface ComponentInternalInstance {
   props: Data
   attrs: Data
   component?: any // later
+
+  proxy?: any | null | 'ComponentPublicInstance' // main proxy that serves as the public instance (`this`)
 }

@@ -97,15 +97,15 @@
     },
     render(proxy) {
       return h(Fragment, [
-        h('h1', 'my name is ' + this.name),
-        h(Text, 'my age is ' + proxy.age), // proxy === age
+        h('p', 'state: ' + this.name + ' is ' + this.age),
+        h(Text, 'prop: ' + this.name2 + ' is ' + proxy.age2), // proxy === this
+        h('p', '$attrs: ' + JSON.stringify(this.$attrs)),
         h('button', { onClick: () => {
           proxy.age++
-          }}, 'grow up'),
+          }}, '修改state'),
         h('button', { onClick: () => {
-          proxy.age++
-          proxy.age++ // 多次调用，会由一个全局微任务一次性flushing
-          }}, 'grow up twice'),
+          proxy.age2++
+          }}, '修改props'),
       ])
     }
   }
@@ -120,9 +120,9 @@
     },
     {
       id: 'PropComponent',
-      title: '组件接受参数props(未完成)',
-      desc: '当rawProps传递给组件时， 没有被组件的props声明的部分会成为attrs，声明的会成为props',
-      makeInit: () => h(PropComponent, { a: 1, b: 2, name2: 'pb', age2: 30 }),
+      title: '组件接受参数props',
+      desc: '当rawProps传递给组件时， 没有被组件的props声明的部分会成为attrs，声明的会成为props. 组件声明了name2和age2，传参为：{ a: 1, b: 2, name2: \'jack\', age2: 30 }',
+      makeInit: () => h(PropComponent, { a: 1, b: 2, name2: 'jack', age2: 30 }),
       makeNext: () => h('ul','nothing'),
     },
   ]

@@ -11,7 +11,7 @@ import {
   VNode,
   VNodeArrayChildren,
 } from './types'
-import { isArray, isArrayChildren, isComponent, isElement, isTextChildren } from '@vue/shared'
+import { hasOwn, isArray, isArrayChildren, isComponent, isElement, isTextChildren } from '@vue/shared'
 import { Fragment, isSameVnode, Text } from './createVnode'
 import getSequence from './seq'
 import { reactive, ReactiveEffect } from '@vue/reactivity3.4'
@@ -124,11 +124,45 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
     // 组件更新 n2.component.subTree.el = n1.component.subTree.el
 
     initProps(instance, newVnode.props)
-    console.log('组件实例: ', instance)
+
+    const publicProperty = {
+      $attrs: (instance: ComponentInternalInstance) => instance.attrs,
+    }
+    instance.proxy = new Proxy(instance, {
+      get(target, key) {
+        // data 和 props属性中的名字不应重名，检查就不写了
+        const { props, state } = target
+        if (hasOwn(state, key)) {
+          return state[key]
+        }
+        if (hasOwn(props, key)) {
+          return props[key as string]
+        }
+        const getter = publicProperty[key]
+        if (getter) {
+          return getter(target)
+        }
+      },
+      set(target, key, value) {
+        const { props, state } = target
+        if (hasOwn(state, key)) {
+          state[key] = value
+          return true
+        }
+        if (hasOwn(props, key)) {
+          // 不可以修改属性中的嵌套属性（内部虽然不会报错）但是不合法，所以从设计上不允许
+          console.warn('props are readonly')
+          // 在严格模式下，Proxy set trap 必须返回 true，否则会抛出 TypeError
+          return true
+        }
+        // 其他情况（既不在 state 也不在 props），保持静默并返回 true，避免严格模式报错
+        return true
+      },
+    })
 
     const componentUpdateFn = () => {
       console.log('组件更新了: ', instance)
-      const subTree = render.call(state, state) // 两个参数分别为render函数中的this指向，和proxy参数
+      const subTree = render.call(instance.proxy, instance.proxy) // 两个参数分别为render函数中的this指向，和proxy参数
       if (!instance.isMounted) {
         // 首次挂载。 直接patch
         instance.subTree = subTree
