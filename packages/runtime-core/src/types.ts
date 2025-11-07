@@ -103,7 +103,7 @@ export type Component = {
 export type State = any
 
 export interface ComponentInternalInstance {
-  state: State
+  data: State
   vnode: VNode
   subTree: VNode
   isMounted: boolean
@@ -115,4 +115,5 @@ export interface ComponentInternalInstance {
   component?: any // later
 
   proxy?: any | null | 'ComponentPublicInstance' // main proxy that serves as the public instance (`this`)
+  render: Component['render']
 }
