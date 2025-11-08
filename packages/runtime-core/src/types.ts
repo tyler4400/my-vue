@@ -59,7 +59,7 @@ export interface VNode {
   key: PropertyKey | null // diff算法需要用到的key
   el: HostNode | null // DOM 虚拟节点对应的真实节点
   shapeFlag: number
-  component: ComponentInternalInstance | null
+  component: ComponentInternalInstance | null // 组件实例， 和instance.vnode互为引用
 }
 
 export type Data = Record<string, any>

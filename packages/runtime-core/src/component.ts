@@ -73,7 +73,7 @@ const handler: ProxyHandler<ComponentInternalInstance> = {
       return true
     }
     if (hasOwn(props, key)) {
-      // 不可以修改属性中的嵌套属性（内部虽然不会报错）但是不合法，所以从设计上不允许
+      // 不可以修改属性中的嵌套属性,技术上可以做到但是不合理，所以从设计上不允许
       console.warn('props are readonly')
       // 在严格模式下，Proxy set trap 必须返回 true，否则会抛出 TypeError
       return true
@@ -95,10 +95,11 @@ export function setupComponent(instance: ComponentInternalInstance) {
   const { data, render } = vnode.type as Component
 
   if (!isFunction(data)) {
-    return console.error('data option must be a function')
+    console.error('data option must be a function')
+    instance.data = {}
+  } else {
+    instance.data = reactive(data.call(instance.proxy))
   }
-
-  instance.data = reactive(data.call(instance.proxy))
 
   instance.render = render
 }

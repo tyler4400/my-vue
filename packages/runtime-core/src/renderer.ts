@@ -9,6 +9,7 @@ import {
   RootRenderFunction,
   VNode,
   VNodeArrayChildren,
+  VNodeProps,
 } from './types'
 import { isArray, isArrayChildren, isComponent, isElement, isTextChildren } from '@vue/shared'
 import { Fragment, isSameVnode, Text } from './createVnode'
@@ -104,7 +105,7 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
   function setupRenderEffect(instance: ComponentInternalInstance, container: HostElement, anchor: HostNode) {
     const { render } = instance
     const componentUpdateFn = () => {
-      console.log('组件更新了: ', instance)
+      console.log('组件自身状态更新了: ', instance)
       const subTree = render.call(instance.proxy, instance.proxy) // 两个参数分别为render函数中的this指向，和proxy参数
       if (!instance.isMounted) {
         // 首次挂载。 直接patch
@@ -133,6 +134,43 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
     setupComponent(instance)
     // 3. 创建一个effect
     setupRenderEffect(instance, container, anchor)
+  }
+
+  const hasPropsChange = (lastProps: VNodeProps, newProps: VNodeProps) => {
+    const lastKeys = Object.keys(lastProps)
+    if (Object.keys(newProps).length !== lastKeys.length) {
+      return true
+    }
+    for (let i = 0; i < lastKeys.length; i++) {
+      const key = lastKeys[i]
+      if (lastProps[key] !== newProps[key]) {
+        return true
+      }
+    }
+    return false
+  }
+
+  const updateProps = (instance: ComponentInternalInstance, lastProps: VNodeProps, newProps: VNodeProps) => {
+    if (hasPropsChange(lastProps, newProps)) {
+      for (const key in newProps) {
+        // instance.props 是响应式的. 这一步就会触发effect
+        instance.props[key] = newProps[key]
+      }
+      for (const key in instance.props) {
+        // 删除旧的多余的属性
+        if (!(key in newProps)) {
+          delete instance.props[key]
+        }
+      }
+    }
+  }
+
+  const updateComponent = (lastVnode: VNode, newVnode: VNode) => {
+    console.log('上级传递的prop更新了', newVnode.props)
+    const instance = (newVnode.component = lastVnode.component)
+    const { props: lastProps } = lastVnode
+    const { props: newProps } = newVnode
+    updateProps(instance, lastProps, newProps)
   }
 
   const unmount = (vnode: VNode) => {
@@ -185,7 +223,7 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
     if (lastVnode === null) {
       mountComponent(newVnode, container, anchor)
     } else {
-      console.log('组件更新 todo')
+      updateComponent(lastVnode, newVnode)
     }
   }
 

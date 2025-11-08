@@ -110,10 +110,33 @@
     }
   }
 
+  const ChildComp = {
+    props: {
+      age: Number,
+    },
+    render(proxy) {
+      return h(Fragment, h('p', '我是子级。我接受的props: age是：' + this.age))
+    }
+  }
+  const FatherComp = {
+    data() {
+      return {
+        age: 18
+      }
+    },
+    render(proxy) {
+      return h(Fragment, [
+        h('p', '我是父级。我的data： age是: ' + this.age),
+        h(ChildComp, { age: this.age }),
+        h('button', { onClick: () => proxy.age++ }, 'grow up'),
+      ])
+    }
+  }
+
   const cases = [
     {
       id: 'queueJob',
-      title: '渲染Component',
+      title: '渲染Component以及组件状态更新',
       desc: '组件的渲染更新时机 会被合并到同一个全局 queue，由那一个微任务回调一次性 flush',
       makeInit: () => h(VueComponent),
       makeNext: () => h('ul','nothing'),
@@ -123,6 +146,13 @@
       title: '组件接受参数props',
       desc: '当rawProps传递给组件时， 没有被组件的props声明的部分会成为attrs，声明的会成为props. 组件声明了name2和age2，传参为：{ a: 1, b: 2, name2: \'jack\', age2: 30 }',
       makeInit: () => h(PropComponent, { a: 1, b: 2, name2: 'jack', age2: 30 }),
+      makeNext: () => h('ul','nothing'),
+    },
+    {
+      id: 'propsChange',
+      title: '组件接受参数props是响应式的，如果没变化则不会更新',
+      desc: '组件接受参数props是响应式的，如果没变化则不会更新',
+      makeInit: () => h(FatherComp),
       makeNext: () => h('ul','nothing'),
     },
   ]
