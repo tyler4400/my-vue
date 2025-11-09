@@ -49,6 +49,7 @@ export interface Renderer {
 
 export type RootRenderFunction = (vnode: VNode | null, container: HostElement) => void
 export type MountChildrenFn = (children: VNodeArrayChildren, container: HostElement) => void
+export type RenderFunction = () => VNodeChild
 
 // 先提供简化的VNode类型定义，后面再优化
 export interface VNode {
@@ -92,12 +93,14 @@ export type VNodeRef =
 
 export type VNodeArrayChildren = Array<'VNodeArrayChildren' | VNodeChildAtom>
 export type VNodeChildAtom = VNode | string | number | boolean | null | undefined | void
+export type VNodeChild = VNodeChildAtom | VNodeArrayChildren
 
 // 选项式组件基本构成
 export type Component = {
   data: () => object
   render: (proxy: State) => VNode
   props: Record<string, any>
+  setup: (props: Data, ctx: SetupContext) => Promise<'RawBindings'> | Data | RenderFunction | void
 }
 
 export type State = any
@@ -109,12 +112,19 @@ export interface ComponentInternalInstance {
   subTree: VNode
   isMounted: boolean
   update: SchedulerJob
-  // 组件的props声明
-  propsOptions: Record<string, any>
+  propsOptions: Record<string, any> // 组件的props声明
+  setupState: Data
   props: Data
   attrs: Data
   component?: any // later
 
   proxy?: any | null | 'ComponentPublicInstance' // main proxy that serves as the public instance (`this`)
   render: Component['render']
+}
+
+export interface SetupContext {
+  attrs: Data
+  slots: 'UnwrapSlotsType'
+  emit: 'EmitFn'
+  expose: () => void
 }

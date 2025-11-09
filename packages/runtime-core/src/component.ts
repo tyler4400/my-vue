@@ -1,5 +1,5 @@
-import { Component, ComponentInternalInstance, Data, VNode } from './types'
-import { reactive } from '@vue/reactivity3.4'
+import { Component, ComponentInternalInstance, Data, SetupContext, VNode } from './types'
+import { proxyRefs, reactive } from '@vue/reactivity3.4'
 import { hasOwn, isFunction } from '@vue/shared'
 
 export function createComponentInstance(vNode: VNode) {
@@ -15,6 +15,7 @@ export function createComponentInstance(vNode: VNode) {
     component: null,
     render: null,
     next: null, // The pending new vnode from parent updates
+    setupState: {},
   }
   return instance
 }
@@ -51,12 +52,15 @@ export const initProps = (instance: ComponentInternalInstance, rawProps: Data) =
 const handler: ProxyHandler<ComponentInternalInstance> = {
   get(target, key) {
     // data 和 props属性中的名字不应重名，检查就不写了
-    const { props, data } = target
+    const { props, data, setupState } = target
     if (hasOwn(data, key)) {
       return data[key]
     }
     if (hasOwn(props, key)) {
       return props[key as string]
+    }
+    if (hasOwn(setupState, key)) {
+      return setupState[key as string]
     }
 
     const publicProperty = {
@@ -68,19 +72,21 @@ const handler: ProxyHandler<ComponentInternalInstance> = {
     }
   },
   set(target, key, value) {
-    const { props, data } = target
+    const { props, data, setupState } = target
     if (hasOwn(data, key)) {
       data[key] = value
       return true
-    }
-    if (hasOwn(props, key)) {
+    } else if (hasOwn(props, key)) {
       // 不可以修改属性中的嵌套属性,技术上可以做到但是不合理，所以从设计上不允许
       console.warn('props are readonly')
       // 在严格模式下，Proxy set trap 必须返回 true，否则会抛出 TypeError
       return true
+    } else if (hasOwn(setupState, key)) {
+      setupState[key as string] = value
+    } else {
+      // 其他情况（既不在 state 也不在 props），保持静默并返回 true，避免严格模式报错
+      return true
     }
-    // 其他情况（既不在 state 也不在 props），保持静默并返回 true，避免严格模式报错
-    return true
   },
 }
 
@@ -93,7 +99,22 @@ export function setupComponent(instance: ComponentInternalInstance) {
   // 赋值代理对象
   instance.proxy = new Proxy(instance, handler)
 
-  const { data, render } = vnode.type as Component
+  const { data, render, setup } = vnode.type as Component
+
+  if (setup) {
+    const setupContext: SetupContext = {
+      emit: 'EmitFn',
+      attrs: instance.attrs,
+      slots: 'UnwrapSlotsType',
+      expose: () => {},
+    }
+    const setupResult = setup(instance.props, setupContext)
+    if (isFunction(setupResult)) {
+      instance.render = setupResult as Component['render']
+    } else {
+      instance.setupState = proxyRefs(setupResult as Data) // 将返回值做脱ref
+    }
+  }
 
   if (!isFunction(data)) {
     console.error('data option must be a function')
@@ -102,5 +123,8 @@ export function setupComponent(instance: ComponentInternalInstance) {
     instance.data = reactive(data.call(instance.proxy))
   }
 
-  instance.render = render
+  if (!instance.render) {
+    // 避免覆盖setup中的render. setup返回的render优先级更高
+    instance.render = render
+  }
 }
