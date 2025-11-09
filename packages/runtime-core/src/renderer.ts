@@ -102,18 +102,34 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
     hostInsert(el, container, anchor)
   }
 
+  const updateComponentPreRender = (instance: ComponentInternalInstance, next: VNode) => {
+    instance.vnode = next // instance.props
+    instance.next = null
+    updateProps(instance, instance.props, next.props)
+
+    // 组件更新的时候 需要更新插槽
+    // Object.assign(instance.slots, next.children)
+  }
+
   function setupRenderEffect(instance: ComponentInternalInstance, container: HostElement, anchor: HostNode) {
     const { render } = instance
     const componentUpdateFn = () => {
       console.log('组件自身状态更新了: ', instance)
-      const subTree = render.call(instance.proxy, instance.proxy) // 两个参数分别为render函数中的this指向，和proxy参数
       if (!instance.isMounted) {
+        const subTree = render.call(instance.proxy, instance.proxy) // 两个参数分别为render函数中的this指向，和proxy参数
         // 首次挂载。 直接patch
         instance.subTree = subTree
         patch(null, subTree, container, anchor)
         instance.isMounted = true
       } else {
         // 非首次就要对比了
+        const { next } = instance
+        if (next) {
+          // 更新属性和插槽
+          updateComponentPreRender(instance, next)
+        }
+
+        const subTree = render.call(instance.proxy, instance.proxy) // 两个参数分别为render函数中的this指向，和proxy参数
         patch(instance.subTree, subTree, container, anchor)
         instance.subTree = subTree
       }
@@ -166,11 +182,23 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
   }
 
   const updateComponent = (lastVnode: VNode, newVnode: VNode) => {
-    console.log('上级传递的prop更新了', newVnode.props)
     const instance = (newVnode.component = lastVnode.component)
-    const { props: lastProps } = lastVnode
-    const { props: newProps } = newVnode
-    updateProps(instance, lastProps, newProps)
+
+    if (shouldComponentUpdate(lastVnode, newVnode)) {
+      instance.next = newVnode // 如果调用update 有next属性，说明是属性更新，插槽更新
+      instance.update() // 让更新逻辑统一
+    }
+  }
+
+  const shouldComponentUpdate = (lastVnode: VNode, newVnode: VNode) => {
+    const { props: lastProps, children: lastChildren } = lastVnode
+    const { props: newProps, children: newChildren } = newVnode
+
+    if (lastChildren || newChildren) return true // 有插槽直接走重新渲染即可
+
+    if (lastProps === newProps) return false
+
+    return hasPropsChange(lastProps, newProps)
   }
 
   const unmount = (vnode: VNode) => {

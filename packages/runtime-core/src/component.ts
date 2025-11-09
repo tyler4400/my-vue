@@ -14,6 +14,7 @@ export function createComponentInstance(vNode: VNode) {
     propsOptions: (vNode.type as Component).props, // 组件的props声明
     component: null,
     render: null,
+    next: null, // The pending new vnode from parent updates
   }
   return instance
 }

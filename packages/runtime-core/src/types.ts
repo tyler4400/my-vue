@@ -105,6 +105,7 @@ export type State = any
 export interface ComponentInternalInstance {
   data: State
   vnode: VNode
+  next: VNode | null // The pending new vnode from parent updates
   subTree: VNode
   isMounted: boolean
   update: SchedulerJob
