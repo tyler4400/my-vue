@@ -159,9 +159,34 @@
       console.log('setup的ctx: ', ctx);
       const age = ref(18)
       return () => h(Fragment, [
-        h('h3', 'setup返回渲染函数.'),
+        h('h3', 'setup返回渲染函数.比选项的render优先级更高'),
         h('p', '来自setupRender的age是：' + age.value),
         h('button', { onClick: () => age.value++ }, 'grow up'),
+      ])
+    }
+  }
+
+  const RenderSlotComp = {
+    render(proxy) {
+      console.log('09-组件的渲染.html-setup-props: ', proxy);
+      return h('div', [
+        proxy.$slots.header('作用域插槽传参'),
+        proxy.$slots.footer('作用域插槽传参')
+      ])
+    }
+  }
+
+  const SendSlots = {
+    setup(props, ctx) {
+      const age = ref(18)
+      return () => h(Fragment, null, [
+        h('h3', '组件状态age.' + age.value),
+        h('button', { onClick: () => age.value++ }, 'grow up'),
+        h('hr'),
+        h(RenderSlotComp, null, {
+          header: (str) => h('header', str),
+          footer: () => h('footer', '插槽内容访问词法作用域: age的值：' + age.value ),
+        })
       ])
     }
   }
@@ -192,7 +217,14 @@
       id: 'setup',
       title: 'setup函数的实现',
       desc: 'setup函数，每个组件只会执行一次。setup可以返回函数 也可以返回对象。返回函数时，这个函数就是渲染函数（比选项中render的优先级更高）。返回对象，作为组件的状态',
-      makeInit: () => h(Fragment, [h(SetupState),h('hr'), h(SetupRender)]),
+      makeInit: () => h(Fragment, [h(SetupState), h('hr'), h(SetupRender)]),
+      makeNext: () => h('ul','nothing'),
+    },
+    {
+      id: 'slots',
+      title: '插槽的实现',
+      desc: '插槽是父组件为子组件传递的vnode片段，本质上是一个渲染函数： type Slot = (...args: any[]) => VNode[]。 当然子组件需用定义好接受的插槽在哪里被渲染。 插槽内容只能访问其定义时所处的作用域，这和 JavaScript 的词法作用域规则是一致的',
+      makeInit: () => h(SendSlots),
       makeNext: () => h('ul','nothing'),
     },
   ]

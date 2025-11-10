@@ -1,6 +1,6 @@
-import { Component, ComponentInternalInstance, Data, SetupContext, VNode } from './types'
+import { Component, ComponentInternalInstance, Data, InternalSlots, SetupContext, VNode } from './types'
 import { proxyRefs, reactive } from '@vue/reactivity3.4'
-import { hasOwn, isFunction } from '@vue/shared'
+import { hasOwn, isFunction, isSlotsChildren } from '@vue/shared'
 
 export function createComponentInstance(vNode: VNode) {
   const instance: ComponentInternalInstance = {
@@ -11,13 +11,21 @@ export function createComponentInstance(vNode: VNode) {
     update: null, // 组件更新函数
     props: {}, // 传递给组件的props
     attrs: {},
+    slots: {},
     propsOptions: (vNode.type as Component).props, // 组件的props声明
-    component: null,
     render: null,
     next: null, // The pending new vnode from parent updates
     setupState: {},
   }
   return instance
+}
+
+const initSlots = (instance: ComponentInternalInstance, children: InternalSlots) => {
+  if (isSlotsChildren(instance.vnode.shapeFlag)) {
+    instance.slots = children
+  } else {
+    instance.slots = {}
+  }
 }
 
 /**
@@ -65,6 +73,7 @@ const handler: ProxyHandler<ComponentInternalInstance> = {
 
     const publicProperty = {
       $attrs: (instance: ComponentInternalInstance) => instance.attrs,
+      $slots: (instance: ComponentInternalInstance) => instance.slots,
     }
     const getter = publicProperty[key]
     if (getter) {
@@ -96,6 +105,8 @@ export function setupComponent(instance: ComponentInternalInstance) {
   // 赋值属性
   initProps(instance, vnode.props)
 
+  initSlots(instance, vnode.children as InternalSlots)
+
   // 赋值代理对象
   instance.proxy = new Proxy(instance, handler)
 
@@ -105,7 +116,7 @@ export function setupComponent(instance: ComponentInternalInstance) {
     const setupContext: SetupContext = {
       emit: 'EmitFn',
       attrs: instance.attrs,
-      slots: 'UnwrapSlotsType',
+      slots: instance.slots,
       expose: () => {},
     }
     const setupResult = setup(instance.props, setupContext)
@@ -117,7 +128,7 @@ export function setupComponent(instance: ComponentInternalInstance) {
   }
 
   if (!isFunction(data)) {
-    console.error('data option must be a function')
+    console.warn('data option must be a function')
     instance.data = {}
   } else {
     instance.data = reactive(data.call(instance.proxy))

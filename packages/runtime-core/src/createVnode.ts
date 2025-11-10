@@ -27,9 +27,17 @@ export function createVnode(
   }
   if (children !== null) {
     // compiled element vnode - if children is passed, only possible types are
-    // string or Array.
+    // orderItems or Array.
     if (isArray(children)) {
       vnode.shapeFlag |= ShapeFlags.ARRAY_CHILDREN
+    } else if (isObject(children)) {
+      // 组件的children是插槽（slots）, children是object的时候一定是插槽
+      // null 不可以省略
+      // h(RenderComponent, null, {
+      //   header: (t) => h('header', 'header-content' + t),
+      //   footer: (t) => h('footer', 'footer-content' + t),
+      // })
+      vnode.shapeFlag |= ShapeFlags.SLOTS_CHILDREN
     } else {
       vnode.children = String(children)
       vnode.shapeFlag |= ShapeFlags.TEXT_CHILDREN

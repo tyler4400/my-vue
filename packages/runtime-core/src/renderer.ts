@@ -3,6 +3,7 @@ import {
   Data,
   HostElement,
   HostNode,
+  InternalSlots,
   MountChildrenFn,
   Renderer,
   RendererOptions,
@@ -11,7 +12,15 @@ import {
   VNodeArrayChildren,
   VNodeProps,
 } from './types'
-import { isArray, isArrayChildren, isComponent, isElement, isTextChildren } from '@vue/shared'
+import {
+  isArray,
+  isArrayChildren,
+  isComponent,
+  isElement,
+  isObject,
+  isSlotsChildren,
+  isTextChildren,
+} from '@vue/shared'
 import { Fragment, isSameVnode, Text } from './createVnode'
 import getSequence from './seq'
 import { ReactiveEffect } from '@vue/reactivity3.4'
@@ -105,10 +114,15 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
   const updateComponentPreRender = (instance: ComponentInternalInstance, next: VNode) => {
     instance.vnode = next // instance.props
     instance.next = null
-    updateProps(instance, instance.props, next.props)
+    updateProps(instance, instance.props, next.props ?? {})
 
     // 组件更新的时候 需要更新插槽
-    // Object.assign(instance.slots, next.children)
+    // 同步 slots：children 为对象即视为 slots，否则置空
+    if (isObject(next.children) && isSlotsChildren(next.shapeFlag)) {
+      instance.slots = next.children as InternalSlots
+    } else {
+      instance.slots = {}
+    }
   }
 
   function setupRenderEffect(instance: ComponentInternalInstance, container: HostElement, anchor: HostNode) {

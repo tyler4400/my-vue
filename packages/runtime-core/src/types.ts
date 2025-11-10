@@ -55,7 +55,7 @@ export type RenderFunction = () => VNodeChild
 export interface VNode {
   type: VNodeTypes
   props: VNodeProps
-  children: VNodeArrayChildren | string | null
+  children: VNodeArrayChildren | InternalSlots | string | null
   __v_isVnode: true
   key: PropertyKey | null // diff算法需要用到的key
   el: HostNode | null // DOM 虚拟节点对应的真实节点
@@ -116,7 +116,7 @@ export interface ComponentInternalInstance {
   setupState: Data
   props: Data
   attrs: Data
-  component?: any // later
+  slots: InternalSlots
 
   proxy?: any | null | 'ComponentPublicInstance' // main proxy that serves as the public instance (`this`)
   render: Component['render']
@@ -124,7 +124,13 @@ export interface ComponentInternalInstance {
 
 export interface SetupContext {
   attrs: Data
-  slots: 'UnwrapSlotsType'
+  slots: InternalSlots
   emit: 'EmitFn'
   expose: () => void
+}
+
+export type Slot = (...args: any[]) => VNode[]
+
+export type InternalSlots = {
+  [name: string]: Slot | undefined
 }
