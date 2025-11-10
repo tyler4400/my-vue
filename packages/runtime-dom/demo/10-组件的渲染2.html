@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>09-组件的渲染（官方 vs 自定义）</title>
+  <title>10-组件的渲染各种情形对比 part2</title>
   <style>
     body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,monospace; }
     #controls { padding: 12px; border-bottom: 1px solid #e5e7eb; position: sticky; top: 0; background: #fff; z-index: 100;}
@@ -22,7 +22,7 @@
 </head>
 <body>
 <div id="controls" role="region" aria-label="说明">
-  <div style="font-weight:600; margin-bottom:6px;">09-组件的渲染各种情形对比 part1（左：官方 API，右：自定义 API）</div>
+  <div style="font-weight:600; margin-bottom:6px;">10-组件的渲染各种情形对比 part2（左：官方 API，右：自定义 API）</div>
   <div style="color:#6b7280; font-size:12px;">渲染初始和渲染更新会自动切换API环境，但后续点击事件需手动切换环境。否则环境会错乱</div>
   <div>
     <button onclick="changeAPI('vue')">切换为官方api环境</button>
@@ -68,105 +68,9 @@
   }
   window.changeAPI = changeAPI
 
-  const VueComponent = {
-    data() {
-      return {
-        name: 'marry',
-        age: 18
-      }
-    },
-    render(proxy) {
-      return h(Fragment, [
-        h('h1', 'my name is ' + this.name),
-        h(Text, 'my age is ' + proxy.age), // proxy === age
-        h('button', { onClick: () => {
-          proxy.age++
-          }}, 'grow up'),
-        h('button', { onClick: () => {
-          proxy.age++
-          proxy.age++ // 多次调用，会由一个全局微任务一次性flushing
-          }}, 'grow up twice'),
-      ])
-    }
-  }
 
-  const PropComponent = {
-    data() {
-      return {
-        name: 'marisol',
-        age: 18
-      }
-    },
-    props: {
-      name2: String,
-      age2: Number,
-    },
-    render(proxy) {
-      return h(Fragment, [
-        h('p', 'state: ' + this.name + ' is ' + this.age),
-        h(Text, 'prop: ' + this.name2 + ' is ' + proxy.age2), // proxy === this
-        h('p', '$attrs: ' + JSON.stringify(this.$attrs)),
-        h('button', { onClick: () => {
-          proxy.age++
-          }}, '修改state'),
-        h('button', { onClick: () => {
-          proxy.age2++
-          }}, '修改props'),
-      ])
-    }
-  }
 
-  const ChildComp = {
-    props: {
-      age: Number,
-    },
-    render(proxy) {
-      return h(Fragment, h('p', '我是子级。我接受的props: age是：' + this.age))
-    }
-  }
-  const FatherComp = {
-    data() {
-      return {
-        age: 18
-      }
-    },
-    render(proxy) {
-      return h(Fragment, [
-        h('p', '我是父级。我的data： age是: ' + this.age),
-        h(ChildComp, { age: this.age }),
-        h('button', { onClick: () => proxy.age++ }, 'grow up'),
-      ])
-    }
-  }
 
-  const SetupState = {
-    render(proxy) {
-      return h(Fragment, [
-        h('h3', '来自setupState的age是：' + this.age),
-        h('button', { onClick: () => proxy.age++ }, 'grow up'),
-      ])
-    },
-    setup(props, ctx) {
-      console.log('setup的ctx: ', ctx);
-      const age = ref(18)
-      return { age } // 返回对象，作为组件的状态
-    }
-  }
-
-  const SetupRender = {
-    render(proxy) {
-      return h('我不应该被渲染出来')
-    },
-    setup(props, ctx) {
-      console.log('setup的ctx: ', ctx);
-      const age = ref(18)
-      return () => h(Fragment, [
-        h('h3', 'setup返回渲染函数.比选项的render优先级更高'),
-        h('p', '来自setupRender的age是：' + age.value),
-        h('button', { onClick: () => age.value++ }, 'grow up'),
-      ])
-    }
-  }
 
   const RenderSlotComp = {
     render(proxy) {
@@ -194,34 +98,6 @@
   }
 
   const cases = [
-    {
-      id: 'queueJob',
-      title: '渲染Component以及组件状态更新',
-      desc: '组件的渲染更新时机 会被合并到同一个全局 queue，由那一个微任务回调一次性 flush',
-      makeInit: () => h(VueComponent),
-      makeNext: () => h('ul','nothing'),
-    },
-    {
-      id: 'PropComponent',
-      title: '组件接受参数props',
-      desc: '当rawProps传递给组件时， 没有被组件的props声明的部分会成为attrs，声明的会成为props. 组件声明了name2和age2，传参为：{ a: 1, b: 2, name2: \'jack\', age2: 30 }',
-      makeInit: () => h(PropComponent, { a: 1, b: 2, name2: 'jack', age2: 30 }),
-      makeNext: () => h('ul','nothing'),
-    },
-    {
-      id: 'propsChange',
-      title: '组件接受参数props是响应式的，如果没变化则不会更新',
-      desc: '组件接受参数props是响应式的，如果没变化则不会更新',
-      makeInit: () => h(FatherComp),
-      makeNext: () => h('ul','nothing'),
-    },
-    {
-      id: 'setup',
-      title: 'setup函数的实现',
-      desc: 'setup函数，每个组件只会执行一次。setup可以返回函数 也可以返回对象。返回函数时，这个函数就是渲染函数（比选项中render的优先级更高）。返回对象，作为组件的状态',
-      makeInit: () => h(Fragment, [h(SetupState), h('hr'), h(SetupRender)]),
-      makeNext: () => h('ul','nothing'),
-    },
     {
       id: 'slots',
       title: '插槽的实现',
