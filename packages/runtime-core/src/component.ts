@@ -1,6 +1,6 @@
 import { Component, ComponentInternalInstance, Data, InternalSlots, SetupContext, VNode } from './types'
 import { proxyRefs, reactive } from '@vue/reactivity3.4'
-import { hasOwn, isFunction, isSlotsChildren } from '@vue/shared'
+import { hasOwn, isFunction, isSlotsChildren, toHandlerKey } from '@vue/shared'
 
 export function createComponentInstance(vNode: VNode) {
   const instance: ComponentInternalInstance = {
@@ -16,6 +16,7 @@ export function createComponentInstance(vNode: VNode) {
     render: null,
     next: null, // The pending new vnode from parent updates
     setupState: {},
+    exposed: {},
   }
   return instance
 }
@@ -74,6 +75,7 @@ const handler: ProxyHandler<ComponentInternalInstance> = {
     const publicProperty = {
       $attrs: (instance: ComponentInternalInstance) => instance.attrs,
       $slots: (instance: ComponentInternalInstance) => instance.slots,
+      // $emit: (instance: ComponentInternalInstance) => instance.emit,
     }
     const getter = publicProperty[key]
     if (getter) {
@@ -114,10 +116,16 @@ export function setupComponent(instance: ComponentInternalInstance) {
 
   if (setup) {
     const setupContext: SetupContext = {
-      emit: 'EmitFn',
+      emit(event, ...payload) {
+        const eventName = toHandlerKey(event) // 'click' -> 'onClick'
+        const handler = instance.vnode.props[eventName]
+        if (isFunction(handler)) handler?.(...payload)
+      },
       attrs: instance.attrs,
       slots: instance.slots,
-      expose: () => {},
+      expose: (value: any) => {
+        instance.exposed = value
+      },
     }
     const setupResult = setup(instance.props, setupContext)
     if (isFunction(setupResult)) {

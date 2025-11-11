@@ -64,46 +64,29 @@
       Fragment = FragmentCustom
       ref = refCustom
     }
-    document.getElementById('env-text').innerHTML = '当前API环境为：' + vueOrCustom
+    document.getElementById('env-text').innerHTML = '当前API：' + vueOrCustom
   }
   window.changeAPI = changeAPI
 
-
-
-
-
-  const RenderSlotComp = {
-    render(proxy) {
-      console.log('09-组件的渲染.html-setup-props: ', proxy);
-      return h('div', [
-        proxy.$slots.header('作用域插槽传参'),
-        proxy.$slots.footer('作用域插槽传参')
-      ])
-    }
-  }
-
-  const SendSlots = {
+  const EmitComp = {
     setup(props, ctx) {
       const age = ref(18)
+      ctx.expose({ a: 'abc' })
       return () => h(Fragment, null, [
         h('h3', '组件状态age.' + age.value),
         h('button', { onClick: () => age.value++ }, 'grow up'),
-        h('hr'),
-        h(RenderSlotComp, null, {
-          header: (str) => h('header', str),
-          footer: () => h('footer', '插槽内容访问词法作用域: age的值：' + age.value ),
-        })
+        h('button', { onClick: () => ctx.emit('my-event', age.value) }, '点这里触发事件'),
       ])
     }
   }
 
   const cases = [
     {
-      id: 'slots',
-      title: '插槽的实现',
-      desc: '插槽是父组件为子组件传递的vnode片段，本质上是一个渲染函数： type Slot = (...args: any[]) => VNode[]。 当然子组件需用定义好接受的插槽在哪里被渲染。 插槽内容只能访问其定义时所处的作用域，这和 JavaScript 的词法作用域规则是一致的',
-      makeInit: () => h(SendSlots),
-      makeNext: () => h('ul','nothing'),
+      id: 'emit',
+      title: '组件事件及卸载',
+      desc: '点击【渲染更新】卸载组件. 事件触发的key有一个转换： \'click\' -> \'onClick\'',
+      makeInit: () => h(EmitComp, { onMyEvent: (age) => alert('事件： 年龄是' + age) }),
+      makeNext: () => h('ul','组件成功卸载'),
     },
   ]
 

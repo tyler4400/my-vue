@@ -109,7 +109,7 @@ export interface ComponentInternalInstance {
   data: State
   vnode: VNode
   next: VNode | null // The pending new vnode from parent updates
-  subTree: VNode
+  subTree: VNode // 组件的render函数所产生的vnode
   isMounted: boolean
   update: SchedulerJob
   propsOptions: Record<string, any> // 组件的props声明
@@ -120,17 +120,22 @@ export interface ComponentInternalInstance {
 
   proxy?: any | null | 'ComponentPublicInstance' // main proxy that serves as the public instance (`this`)
   render: Component['render']
+  exposed: Data
 }
 
 export interface SetupContext {
   attrs: Data
   slots: InternalSlots
-  emit: 'EmitFn'
-  expose: () => void
+  emit: EmitFn
+  expose: (value: any) => void
 }
 
 export type Slot = (...args: any[]) => VNode[]
 
 export type InternalSlots = {
   [name: string]: Slot | undefined
+}
+
+export interface EmitFn {
+  (event: string, ...args: any[]): any
 }

@@ -218,6 +218,8 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
   const unmount = (vnode: VNode) => {
     if (vnode.type === Fragment) {
       unmountChildren(vnode.children as VNodeArrayChildren)
+    } else if (isComponent(vnode.shapeFlag)) {
+      unmount(vnode.component.subTree)
     } else {
       hostRemove(vnode.el)
     }
