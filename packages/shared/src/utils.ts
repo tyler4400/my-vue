@@ -14,6 +14,8 @@ export function isArray(value) {
   return Array.isArray(value)
 }
 
+export const NOOP = () => {}
+
 export const hasOwn = (() => {
   if (isFunction(Object.hasOwn)) {
     return (value: any, key: PropertyKey) => (value === null || value === undefined ? false : Object.hasOwn(value, key))

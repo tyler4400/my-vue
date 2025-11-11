@@ -1,5 +1,6 @@
 import { Fragment, Text } from './createVnode'
 import { SchedulerJob } from './scheduler'
+import { LifecycleHooks } from './enums'
 
 export interface RendererOptions {
   patchProp(
@@ -121,6 +122,62 @@ export interface ComponentInternalInstance {
   proxy?: any | null | 'ComponentPublicInstance' // main proxy that serves as the public instance (`this`)
   render: Component['render']
   exposed: Data
+  /**
+   * @internal
+   */
+  [LifecycleHooks.BEFORE_CREATE]: LifecycleHook
+  /**
+   * @internal
+   */
+  [LifecycleHooks.CREATED]: LifecycleHook
+  /**
+   * @internal
+   */
+  [LifecycleHooks.BEFORE_MOUNT]: LifecycleHook
+  /**
+   * @internal
+   */
+  [LifecycleHooks.MOUNTED]: LifecycleHook
+  /**
+   * @internal
+   */
+  [LifecycleHooks.BEFORE_UPDATE]: LifecycleHook
+  /**
+   * @internal
+   */
+  [LifecycleHooks.UPDATED]: LifecycleHook
+  /**
+   * @internal
+   */
+  [LifecycleHooks.BEFORE_UNMOUNT]: LifecycleHook
+  /**
+   * @internal
+   */
+  [LifecycleHooks.UNMOUNTED]: LifecycleHook
+  /**
+   * @internal
+   */
+  [LifecycleHooks.RENDER_TRACKED]: LifecycleHook
+  /**
+   * @internal
+   */
+  [LifecycleHooks.RENDER_TRIGGERED]: LifecycleHook
+  /**
+   * @internal
+   */
+  [LifecycleHooks.ACTIVATED]: LifecycleHook
+  /**
+   * @internal
+   */
+  [LifecycleHooks.DEACTIVATED]: LifecycleHook
+  /**
+   * @internal
+   */
+  [LifecycleHooks.ERROR_CAPTURED]: LifecycleHook
+  /**
+   * @internal
+   */
+  [LifecycleHooks.SERVER_PREFETCH]: LifecycleHook<() => Promise<unknown>>
 }
 
 export interface SetupContext {
@@ -139,3 +196,5 @@ export type InternalSlots = {
 export interface EmitFn {
   (event: string, ...args: any[]): any
 }
+
+export type LifecycleHook<TFn = Function> = (TFn & SchedulerJob)[] | null

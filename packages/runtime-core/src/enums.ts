@@ -1,0 +1,16 @@
+export enum LifecycleHooks {
+  BEFORE_CREATE = 'beforeCreate',
+  CREATED = 'created',
+  BEFORE_MOUNT = 'beforeMount',
+  MOUNTED = 'mounted',
+  BEFORE_UPDATE = 'beforeUpdate',
+  UPDATED = 'updated',
+  BEFORE_UNMOUNT = 'beforeUnmount',
+  UNMOUNTED = 'unmounted',
+  DEACTIVATED = 'deactivated',
+  ACTIVATED = 'activated',
+  RENDER_TRIGGERED = 'renderTriggered',
+  RENDER_TRACKED = 'renderTracked',
+  ERROR_CAPTURED = 'errorCaptured',
+  SERVER_PREFETCH = 'serverPrefetch',
+}

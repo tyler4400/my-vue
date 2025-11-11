@@ -1,6 +1,7 @@
-import { Component, ComponentInternalInstance, Data, InternalSlots, SetupContext, VNode } from './types'
+import { Component, ComponentInternalInstance, Data, InternalSlots, LifecycleHook, SetupContext, VNode } from './types'
 import { proxyRefs, reactive } from '@vue/reactivity3.4'
-import { hasOwn, isFunction, isSlotsChildren, toHandlerKey } from '@vue/shared'
+import { hasOwn, isFunction, isSlotsChildren, NOOP, toHandlerKey } from '@vue/shared'
+import { LifecycleHooks } from './enums'
 
 export function createComponentInstance(vNode: VNode) {
   const instance: ComponentInternalInstance = {
@@ -17,6 +18,20 @@ export function createComponentInstance(vNode: VNode) {
     next: null, // The pending new vnode from parent updates
     setupState: {},
     exposed: {},
+    [LifecycleHooks.BEFORE_CREATE]: null,
+    [LifecycleHooks.CREATED]: null,
+    [LifecycleHooks.BEFORE_MOUNT]: null,
+    [LifecycleHooks.MOUNTED]: null,
+    [LifecycleHooks.BEFORE_UPDATE]: null,
+    [LifecycleHooks.UPDATED]: null,
+    [LifecycleHooks.BEFORE_UNMOUNT]: null,
+    [LifecycleHooks.UNMOUNTED]: null,
+    [LifecycleHooks.RENDER_TRACKED]: null,
+    [LifecycleHooks.RENDER_TRIGGERED]: null,
+    [LifecycleHooks.ACTIVATED]: null,
+    [LifecycleHooks.DEACTIVATED]: null,
+    [LifecycleHooks.ERROR_CAPTURED]: null,
+    [LifecycleHooks.SERVER_PREFETCH]: null,
   }
   return instance
 }
@@ -112,7 +127,7 @@ export function setupComponent(instance: ComponentInternalInstance) {
   // 赋值代理对象
   instance.proxy = new Proxy(instance, handler)
 
-  const { data, render, setup } = vnode.type as Component
+  const { data = NOOP, render, setup } = vnode.type as Component
 
   if (setup) {
     const setupContext: SetupContext = {
@@ -127,7 +142,11 @@ export function setupComponent(instance: ComponentInternalInstance) {
         instance.exposed = value
       },
     }
+
+    setCurrentInstance(instance)
     const setupResult = setup(instance.props, setupContext)
+    unsetCurrentInstance()
+
     if (isFunction(setupResult)) {
       instance.render = setupResult as Component['render']
     } else {
@@ -146,4 +165,15 @@ export function setupComponent(instance: ComponentInternalInstance) {
     // 避免覆盖setup中的render. setup返回的render优先级更高
     instance.render = render
   }
+}
+
+export let currentInstance: ComponentInternalInstance = null
+export const getCurrentInstance = () => {
+  return currentInstance
+}
+export const setCurrentInstance = instance => {
+  currentInstance = instance
+}
+export const unsetCurrentInstance = () => {
+  currentInstance = null
 }
