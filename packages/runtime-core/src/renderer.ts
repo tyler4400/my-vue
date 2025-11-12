@@ -26,6 +26,7 @@ import getSequence from './seq'
 import { ReactiveEffect } from '@vue/reactivity3.4'
 import { queueJob } from './scheduler'
 import { createComponentInstance, setupComponent } from './component'
+import { invokeArray } from './apiLifecycle'
 
 export function createRenderer(renderOptions: RendererOptions): Renderer {
   const {
@@ -129,15 +130,22 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
     const { render } = instance
     const componentUpdateFn = () => {
       console.log('组件自身状态更新了: ', instance)
+      const { beforeMount, mounted } = instance
       if (!instance.isMounted) {
+        invokeArray(beforeMount)
+
         const subTree = render.call(instance.proxy, instance.proxy) // 两个参数分别为render函数中的this指向，和proxy参数
         // 首次挂载。 直接patch
         instance.subTree = subTree
         patch(null, subTree, container, anchor)
         instance.isMounted = true
+
+        invokeArray(mounted)
       } else {
         // 非首次就要对比了
-        const { next } = instance
+        const { beforeUpdate, updated, next } = instance
+        invokeArray(beforeUpdate)
+
         if (next) {
           // 更新属性和插槽
           updateComponentPreRender(instance, next)
@@ -146,6 +154,8 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
         const subTree = render.call(instance.proxy, instance.proxy) // 两个参数分别为render函数中的this指向，和proxy参数
         patch(instance.subTree, subTree, container, anchor)
         instance.subTree = subTree
+
+        invokeArray(updated)
       }
     }
 
@@ -438,7 +448,7 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
       tail1--
       tail2--
     }
-    console.log('头尾分别diff一遍，结束时此时头，尾1，尾2指针所处位置：', head, tail1, tail2)
+    // console.log('头尾分别diff一遍，结束时此时头，尾1，尾2指针所处位置：', head, tail1, tail2)
 
     // 3. common sequence + mount
     // (a b)

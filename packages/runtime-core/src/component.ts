@@ -59,7 +59,7 @@ export const initProps = (instance: ComponentInternalInstance, rawProps: Data) =
 
   if (rawProps) {
     for (const key in rawProps) {
-      // 用所有的来分裂
+      // 用options定义来区分props与attrs
       const value = rawProps[key]
       if (key in propsOptions) {
         props[key] = value
