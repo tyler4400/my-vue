@@ -1,4 +1,4 @@
-import { Component, ComponentInternalInstance, Data, InternalSlots, LifecycleHook, SetupContext, VNode } from './types'
+import { Component, ComponentInternalInstance, Data, InternalSlots, SetupContext, VNode } from './types'
 import { proxyRefs, reactive } from '@vue/reactivity3.4'
 import { hasOwn, isFunction, isSlotsChildren, NOOP, toHandlerKey } from '@vue/shared'
 import { LifecycleHooks } from './enums'
@@ -17,7 +17,7 @@ export function createComponentInstance(vNode: VNode) {
     render: null,
     next: null, // The pending new vnode from parent updates
     setupState: {},
-    exposed: {},
+    exposed: null,
     [LifecycleHooks.BEFORE_CREATE]: null,
     [LifecycleHooks.CREATED]: null,
     [LifecycleHooks.BEFORE_MOUNT]: null,

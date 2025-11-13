@@ -19,11 +19,12 @@ import {
   isElement,
   isObject,
   isSlotsChildren,
+  isStatefulComponent,
   isTextChildren,
 } from '@vue/shared'
 import { Fragment, isSameVnode, Text } from './createVnode'
 import getSequence from './seq'
-import { ReactiveEffect } from '@vue/reactivity3.4'
+import { isRef, ReactiveEffect, Ref } from '@vue/reactivity3.4'
 import { queueJob } from './scheduler'
 import { createComponentInstance, setupComponent } from './component'
 import { invokeArray } from './apiLifecycle'
@@ -287,7 +288,7 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
       unmount(lastVnode)
       lastVnode = null
     }
-    const { type, shapeFlag } = newVnode
+    const { type, shapeFlag, ref } = newVnode
     switch (type) {
       case Text:
         processText(lastVnode, newVnode, container)
@@ -304,6 +305,18 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
           // 对组件的处理，Vue3中函数式组件已经废弃了，没有性能节约
           processComponent(lastVnode, newVnode, container, anchor)
         }
+    }
+
+    // 设置ref
+    if (ref !== null) {
+      setRef(ref, newVnode)
+    }
+    function setRef(rawRef: unknown, vnode: VNode) {
+      // 如果是组件，有定义expose就取expose没有就是代理实例。这个逻辑在3.5之后是只会是expose，不会暴露代理实例
+      const value = isStatefulComponent(vnode.shapeFlag) ? vnode.component.exposed || vnode.component.proxy : vnode.el
+      if (isRef(rawRef)) {
+        ;(rawRef as Ref).value = value
+      }
     }
   }
 

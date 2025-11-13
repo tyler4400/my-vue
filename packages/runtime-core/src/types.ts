@@ -1,6 +1,7 @@
 import { Fragment, Text } from './createVnode'
 import { SchedulerJob } from './scheduler'
 import { LifecycleHooks } from './enums'
+import { Ref } from '@vue/reactivity3.4'
 
 export interface RendererOptions {
   patchProp(
@@ -62,6 +63,7 @@ export interface VNode {
   el: HostNode | null // DOM 虚拟节点对应的真实节点
   shapeFlag: number
   component: ComponentInternalInstance | null // 组件实例， 和instance.vnode互为引用
+  ref: VNodeRef
 }
 
 export type Data = Record<string, any>
@@ -89,7 +91,7 @@ export type VNodeProps = {
 
 export type VNodeRef =
   | string
-  | 'Ref'
+  | Ref
   | ((ref: Element | 'ComponentPublicInstance' | null, refs: Record<string, any>) => void)
 
 export type VNodeArrayChildren = Array<'VNodeArrayChildren' | VNodeChildAtom>

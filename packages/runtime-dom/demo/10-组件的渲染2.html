@@ -164,6 +164,32 @@
     },
   };
 
+  const RefedComp = {
+    setup(props, ctx) {
+      const age = ref(18)
+      ctx.expose({ age: () => age.value })
+      return () => h(Fragment, null, [
+        h('h3', '子组件状态age.' + age.value),
+        h('button', { onClick: () => age.value++ }, 'grow up'),
+      ])
+    }
+  }
+
+  const RefComponent = {
+    setup(props, { emit, expose, slots, attrs }) {
+      const comp = ref(null);
+      const el = ref(null);
+
+      onMounted(() => {
+        console.log('dom对象el: ', el.value);
+        console.log('comp实例: ', comp.value, comp.value.age()); // comp.value即为子组件的引用，comp.value.a=100
+      })
+      return () => {
+        return h('div', { ref: el, a: 100 }, h(RefedComp, { ref: comp})); // <div a="100"></div> ref指代dom元素的情况
+      };
+    },
+  };
+
   const cases = [
     {
       id: 'emit',
@@ -177,6 +203,13 @@
       title: '组件生命周期',
       desc: '生命周期函数可以是异步的。挂载时，其所有同步子组件都已经被挂载之后才挂载父组件',
       makeInit: () => h(Father),
+      makeNext: () => h('h1','-'),
+    },
+    {
+      id: 'ref-comp',
+      title: 'ref引用',
+      desc: 'ref可以引用组件实例或者dom对象（3.5之后组件实例只能是expose的内容）',
+      makeInit: () => h(RefComponent),
       makeNext: () => h('h1','-'),
     },
   ]

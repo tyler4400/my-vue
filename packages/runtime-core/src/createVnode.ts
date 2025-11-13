@@ -24,6 +24,7 @@ export function createVnode(
     el: null,
     shapeFlag,
     component: null,
+    ref: props?.ref,
   }
   if (children !== null) {
     // compiled element vnode - if children is passed, only possible types are
