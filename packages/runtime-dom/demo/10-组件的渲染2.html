@@ -190,6 +190,10 @@
     },
   };
 
+  function functionalComponent(props) {
+    return h('h3', '函数式组件。接受的参数：' + props.a + props.b);
+  }
+
   const cases = [
     {
       id: 'emit',
@@ -210,6 +214,13 @@
       title: 'ref引用',
       desc: 'ref可以引用组件实例或者dom对象（3.5之后组件实例只能是expose的内容）',
       makeInit: () => h(RefComponent),
+      makeNext: () => h('h1','-'),
+    },
+    {
+      id: 'functional-component',
+      title: '函数式组件',
+      desc: '函数式组件是一种定义自身没有任何状态的组件的方式。它们很像纯函数：接收 props，返回 vnodes。函数式组件在渲染过程中不会创建组件实例 (也就是说，没有 this)，也不会触发常规的组件生命周期钩子。',
+      makeInit: () => h(functionalComponent, { a: 1, b: 2 }),
       makeNext: () => h('h1','-'),
     },
   ]

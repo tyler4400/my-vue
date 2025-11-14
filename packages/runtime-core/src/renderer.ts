@@ -1,6 +1,7 @@
 import {
   ComponentInternalInstance,
   Data,
+  FunctionalComponent,
   HostElement,
   HostNode,
   InternalSlots,
@@ -8,6 +9,7 @@ import {
   Renderer,
   RendererOptions,
   RootRenderFunction,
+  SetupContext,
   VNode,
   VNodeArrayChildren,
   VNodeProps,
@@ -113,6 +115,16 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
     hostInsert(el, container, anchor)
   }
 
+  const renderComponent = (instance: ComponentInternalInstance): VNode => {
+    const { render, vnode, proxy, attrs } = instance
+    if (isStatefulComponent(vnode.shapeFlag)) {
+      return render.call(proxy, proxy)
+    } else {
+      // 其实传参不应该是attr，函数组件也可以定义props // https://cn.vuejs.org/guide/extras/render-function.html#functional-components
+      return (vnode.type as FunctionalComponent)(attrs, {} as SetupContext)
+    }
+  }
+
   const updateComponentPreRender = (instance: ComponentInternalInstance, next: VNode) => {
     instance.vnode = next // instance.props
     instance.next = null
@@ -128,14 +140,13 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
   }
 
   function setupRenderEffect(instance: ComponentInternalInstance, container: HostElement, anchor: HostNode) {
-    const { render } = instance
     const componentUpdateFn = () => {
       console.log('组件自身状态更新了: ', instance)
       const { beforeMount, mounted } = instance
       if (!instance.isMounted) {
         invokeArray(beforeMount)
 
-        const subTree = render.call(instance.proxy, instance.proxy) // 两个参数分别为render函数中的this指向，和proxy参数
+        const subTree = renderComponent(instance) // 两个参数分别为render函数中的this指向，和proxy参数
         // 首次挂载。 直接patch
         instance.subTree = subTree
         patch(null, subTree, container, anchor)
@@ -152,7 +163,7 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
           updateComponentPreRender(instance, next)
         }
 
-        const subTree = render.call(instance.proxy, instance.proxy) // 两个参数分别为render函数中的this指向，和proxy参数
+        const subTree = renderComponent(instance) // 两个参数分别为render函数中的this指向，和proxy参数
         patch(instance.subTree, subTree, container, anchor)
         instance.subTree = subTree
 

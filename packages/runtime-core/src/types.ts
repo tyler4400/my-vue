@@ -72,6 +72,7 @@ export type VNodeTypes =
   | string
   | VNode
   | Component
+  | FunctionalComponent
   | 'ClassComponent'
   | typeof Text
   | 'Static'
@@ -81,6 +82,10 @@ export type VNodeTypes =
   | 'TeleportImpl'
   | 'Suspense'
   | 'SuspenseImpl'
+
+export interface FunctionalComponent {
+  (props: Data, ctx: Omit<SetupContext, 'expose'>): any
+}
 
 export type VNodeProps = {
   key?: PropertyKey
