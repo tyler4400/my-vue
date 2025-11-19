@@ -13,18 +13,21 @@ import {
   VNode,
   VNodeArrayChildren,
   VNodeProps,
+  VNodeRef,
 } from './types'
 import {
   isArray,
   isArrayChildren,
   isComponent,
   isElement,
+  isNumber,
   isObject,
   isSlotsChildren,
   isStatefulComponent,
+  isString,
   isTextChildren,
 } from '@vue/shared'
-import { Fragment, isSameVnode, Text } from './createVnode'
+import { createVnode, Fragment, isSameVnode, Text } from './createVnode'
 import getSequence from './seq'
 import { isRef, ReactiveEffect, Ref } from '@vue/reactivity3.4'
 import { queueJob } from './scheduler'
@@ -46,34 +49,21 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
     patchProp: hostPatchProp,
   } = renderOptions
 
-  /**
-   * 暂时放一种更优的写法，兼顾了child是string等情形。但是先不着急加上， 看课程后续是否有优化这里
-   * function mountChildren(children, container) {
-   *   for (const child of children) {
-   *     if (Array.isArray(child)) {
-   *       mountChildren(child, container)         // 递归扁平化
-   *       continue
-   *     }
-   *     if (child == null || typeof child === 'boolean') {
-   *       continue                                // 忽略空/布尔
-   *     }
-   *     if (typeof child === 'string' || typeof child === 'number') {
-   *       const textNode = hostCreateText(String(child))
-   *       hostInsert(textNode, container)         // 直接作为文本节点插入
-   *       continue
-   *     }
-   *     // 走 vnode 路径
-   *     patch(null, child as VNode, container)
-   *   }
-   * }
-   * @param children
-   * @param container
-   */
+  const normalize = (children: VNode['children']) => {
+    if (isArray(children)) {
+      for (let i = 0; i < children.length; i++) {
+        if (isString(children[i]) || isNumber(children[i])) {
+          // 将字符串或数字转换为文本虚拟节点
+          children[i] = createVnode(Text, null, String(children[i]))
+        }
+      }
+    }
+    return children
+  }
   const mountChildren: MountChildrenFn = (children, container) => {
+    normalize(children)
     for (let i = 0; i < children.length; i++) {
       const child = children[i]
-      // todo 处理 child别的类型，暂时都按照vnode处理，child还可能是string
-      // console.log('渲染子元素', child)
       patch(null, child as VNode, container)
     }
   }
@@ -322,7 +312,7 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
     if (ref !== null) {
       setRef(ref, newVnode)
     }
-    function setRef(rawRef: unknown, vnode: VNode) {
+    function setRef(rawRef: VNodeRef, vnode: VNode) {
       // 如果是组件，有定义expose就取expose没有就是代理实例。这个逻辑在3.5之后是只会是expose，不会暴露代理实例
       const value = isStatefulComponent(vnode.shapeFlag) ? vnode.component.exposed || vnode.component.proxy : vnode.el
       if (isRef(rawRef)) {
@@ -387,7 +377,7 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
     const newShape = newVnode.shapeFlag
 
     const lastChildren = lastVnode.children
-    const newChildren = newVnode.children
+    const newChildren = normalize(newVnode.children)
 
     if (isTextChildren(lastShape)) {
       if (isTextChildren(newShape) && lastChildren !== newChildren) {

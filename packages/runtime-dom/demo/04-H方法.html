@@ -161,7 +161,7 @@
 
   const diffExamples = [
     {
-      title: 'D1) 数组 children 含原始文本（与官方不一致：官方会规范化为 Text；自定义会报错）',
+      title: 'D1) 数组 children 含原始文本（已经与官方一致：也会规范化为 Text）',
       createOfficial: () => {
         const h = hFor('vue')
         return h('div', [h('b', 'X'), ' raw ', h('i', 'Y')])
@@ -172,7 +172,7 @@
       },
     },
     {
-      title: 'D2) children=0（与官方不一致：官方渲染为“0”；自定义被忽略）',
+      title: 'D2) children=0（已经与官方一致）',
       createOfficial: () => hFor('vue')('section', 0),
       createCustom: () => hFor('custom')('section', 0),
     },
@@ -202,7 +202,7 @@
       createCustom: () => hFor('custom')('div', { tabindex: 0, 'data-zero': 0, style: { padding: '6px', border: '1px dashed #9ca3af' } }, 'attr 为 0'),
     },
     {
-      title: 'D8) 多参 children 混入原始文本（与官方不一致：官方 normalize；自定义会报错）',
+      title: 'D8) 多参 children 混入原始文本（已修改，和官方一致）',
       createOfficial: () => {
         const h = hFor('vue')
         return h('div', { style: { padding: '6px', border: '1px dashed #9ca3af' } }, h('span', 'X'), ' raw ', h('span', 'Y'))

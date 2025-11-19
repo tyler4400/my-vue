@@ -10,6 +10,10 @@ export function isString(value) {
   return typeof value === 'string'
 }
 
+export function isNumber(value) {
+  return typeof value === 'number'
+}
+
 export function isArray(value) {
   return Array.isArray(value)
 }
