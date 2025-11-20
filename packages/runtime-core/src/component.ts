@@ -3,7 +3,7 @@ import { proxyRefs, reactive } from '@vue/reactivity3.4'
 import { hasOwn, isFunction, isSlotsChildren, NOOP, toHandlerKey } from '@vue/shared'
 import { LifecycleHooks } from './enums'
 
-export function createComponentInstance(vNode: VNode) {
+export function createComponentInstance(vNode: VNode, parent: ComponentInternalInstance) {
   const instance: ComponentInternalInstance = {
     data: null,
     vnode: vNode,
@@ -32,6 +32,8 @@ export function createComponentInstance(vNode: VNode) {
     [LifecycleHooks.DEACTIVATED]: null,
     [LifecycleHooks.ERROR_CAPTURED]: null,
     [LifecycleHooks.SERVER_PREFETCH]: null,
+    parent,
+    provides: parent ? parent.provides : Object.create(null), // 初始子组件用的也是父组件的provides
   }
   return instance
 }

@@ -50,7 +50,11 @@ export interface Renderer {
 }
 
 export type RootRenderFunction = (vnode: VNode | null, container: HostElement) => void
-export type MountChildrenFn = (children: VNodeArrayChildren, container: HostElement) => void
+export type MountChildrenFn = (
+  children: VNodeArrayChildren,
+  container: HostElement,
+  parentComponent: ComponentInternalInstance,
+) => void
 export type RenderFunction = () => VNodeChild
 
 // 先提供简化的VNode类型定义，后面再优化
@@ -185,6 +189,8 @@ export interface ComponentInternalInstance {
    * @internal
    */
   [LifecycleHooks.SERVER_PREFETCH]: LifecycleHook<() => Promise<unknown>>
+  provides: Record<PropertyKey, any>
+  parent: ComponentInternalInstance | null
 }
 
 export interface SetupContext {
