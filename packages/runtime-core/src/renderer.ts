@@ -26,6 +26,7 @@ import {
   isStatefulComponent,
   isString,
   isTextChildren,
+  isTeleportComp,
 } from '@vue/shared'
 import { createVnode, Fragment, isSameVnode, Text } from './createVnode'
 import getSequence from './seq'
@@ -322,8 +323,13 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
         break
       default:
         if (isElement(shapeFlag)) {
-          // 对元素（区别于组件）处理
+          // 对元素（区别于组件）的处理
           processElement(lastVnode, newVnode, container, anchor, parentComponent)
+        }
+        if (isTeleportComp(shapeFlag)) {
+          // 对内置组件Teleport的处理
+          // processElement(lastVnode, newVnode, container, anchor, parentComponent)
+          console.log('teleport')
         }
         if (isComponent(shapeFlag)) {
           // 对组件的处理，Vue3中函数式组件已经废弃了，没有性能节约

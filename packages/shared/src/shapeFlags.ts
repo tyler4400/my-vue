@@ -35,7 +35,7 @@ export const isArrayChildren = (type: number) => ShapeFlags.ARRAY_CHILDREN & typ
 
 export const isSlotsChildren = (type: number) => ShapeFlags.SLOTS_CHILDREN & type
 
-export const isTELEPORT = (type: number) => ShapeFlags.TELEPORT & type
+export const isTeleportComp = (type: number) => ShapeFlags.TELEPORT & type
 
 export const isSUSPENSE = (type: number) => ShapeFlags.SUSPENSE & type
 

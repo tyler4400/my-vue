@@ -1,5 +1,6 @@
 import { VNode, VNodeArrayChildren, VNodeProps, VNodeTypes } from './types'
 import { isArray, isFunction, isObject, isString, ShapeFlags } from '@vue/shared'
+import { isTeleport } from './Teleport'
 
 export const Text = Symbol.for('v-txt')
 export const Fragment = Symbol.for('v-fgt')
@@ -13,6 +14,9 @@ export function createVnode(
   if (isString(type)) {
     // Dom元素
     shapeFlag = ShapeFlags.ELEMENT
+  } else if (isTeleport(type)) {
+    // 是内置组件Teleport
+    shapeFlag = ShapeFlags.TELEPORT
   } else if (isObject(type)) {
     // 组件
     shapeFlag = ShapeFlags.STATEFUL_COMPONENT
@@ -33,6 +37,7 @@ export function createVnode(
     shapeFlag,
     component: null,
     ref: props?.ref,
+    target: null,
   }
   if (children !== null) {
     // compiled element vnode - if children is passed, only possible types are

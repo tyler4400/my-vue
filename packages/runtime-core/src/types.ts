@@ -68,6 +68,7 @@ export interface VNode {
   shapeFlag: number
   component: ComponentInternalInstance | null // 组件实例， 和instance.vnode互为引用
   ref: VNodeRef
+  target: HostElement | null // teleport target
 }
 
 export type Data = Record<string, any>
@@ -133,61 +134,19 @@ export interface ComponentInternalInstance {
   proxy?: any | null | 'ComponentPublicInstance' // main proxy that serves as the public instance (`this`)
   render: Component['render']
   exposed: Data
-  /**
-   * @internal
-   */
   [LifecycleHooks.BEFORE_CREATE]: LifecycleHook
-  /**
-   * @internal
-   */
   [LifecycleHooks.CREATED]: LifecycleHook
-  /**
-   * @internal
-   */
   [LifecycleHooks.BEFORE_MOUNT]: LifecycleHook
-  /**
-   * @internal
-   */
   [LifecycleHooks.MOUNTED]: LifecycleHook
-  /**
-   * @internal
-   */
   [LifecycleHooks.BEFORE_UPDATE]: LifecycleHook
-  /**
-   * @internal
-   */
   [LifecycleHooks.UPDATED]: LifecycleHook
-  /**
-   * @internal
-   */
   [LifecycleHooks.BEFORE_UNMOUNT]: LifecycleHook
-  /**
-   * @internal
-   */
   [LifecycleHooks.UNMOUNTED]: LifecycleHook
-  /**
-   * @internal
-   */
   [LifecycleHooks.RENDER_TRACKED]: LifecycleHook
-  /**
-   * @internal
-   */
   [LifecycleHooks.RENDER_TRIGGERED]: LifecycleHook
-  /**
-   * @internal
-   */
   [LifecycleHooks.ACTIVATED]: LifecycleHook
-  /**
-   * @internal
-   */
   [LifecycleHooks.DEACTIVATED]: LifecycleHook
-  /**
-   * @internal
-   */
   [LifecycleHooks.ERROR_CAPTURED]: LifecycleHook
-  /**
-   * @internal
-   */
   [LifecycleHooks.SERVER_PREFETCH]: LifecycleHook<() => Promise<unknown>>
   provides: Record<PropertyKey, any>
   parent: ComponentInternalInstance | null
