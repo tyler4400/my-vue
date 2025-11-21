@@ -167,7 +167,7 @@ custom: <div id="teleport-custom"></div>
     {
       id: 'Teleport',
       title: 'Teleport',
-      desc: '建议尽可能将任何对响应式状态的变更都保持在供给方组件中。 有的时候，我们可能需要在注入方组件中更改数据。在这种情况下，我们推荐在供给方组件内声明并提供一个更改数据的方法函数',
+      desc: '这里如果children不是数组会报错， 自己写的没考虑全面',
       makeInit: () => h(Teleport, { to: isVue ? '#teleport-vue' : '#teleport-custom' }, [h('span', 'teleport'), h('span', '-渲染到此处')]),
       makeNext: () => h(Teleport, { to: isVue ? '#teleport-vue' : '#teleport-custom' }, '如果不是数组会报错'),
     },

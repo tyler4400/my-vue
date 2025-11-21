@@ -1,6 +1,6 @@
 import { Fragment, Text } from './createVnode'
 import { SchedulerJob } from './scheduler'
-import { Teleport } from './Teleport'
+import { Teleport } from './components/Teleport'
 import { LifecycleHooks } from './enums'
 import { Ref } from '@vue/reactivity3.4'
 

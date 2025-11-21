@@ -34,7 +34,7 @@ import { isRef, ReactiveEffect, Ref } from '@vue/reactivity3.4'
 import { queueJob } from './scheduler'
 import { createComponentInstance, setupComponent } from './component'
 import { invokeArray } from './apiLifecycle'
-import { Teleport } from './Teleport'
+import { Teleport } from './components/Teleport'
 
 export function createRenderer(renderOptions: RendererOptions): Renderer {
   const {

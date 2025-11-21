@@ -1,6 +1,6 @@
 import { VNode, VNodeArrayChildren, VNodeProps, VNodeTypes } from './types'
 import { isArray, isFunction, isObject, isString, ShapeFlags } from '@vue/shared'
-import { isTeleport } from './Teleport'
+import { isTeleport } from './components/Teleport'
 
 export const Text = Symbol.for('v-txt')
 export const Fragment = Symbol.for('v-fgt')
