@@ -47,6 +47,8 @@
     <span id="env-text"></span>
   </div>
 </div>
+vue: <div id="teleport-vue"></div>
+custom: <div id="teleport-custom"></div>
 
 <main id="root"></main>
 
@@ -64,6 +66,7 @@
     onUpdated as onUpdatedVue,
     provide as provideVue,
     inject as injectVue,
+    Teleport as TeleportVue,
   } from "../../../node_modules/vue/dist/vue.runtime.esm-browser.js";
   import {
     render as renderCustom,
@@ -78,11 +81,14 @@
     onUpdated as onUpdatedCustom,
     provide as provideCustom,
     inject as injectCustom,
+    Teleport as TeleportCustom,
   } from '../dist/runtime-dom.esm.js'
 
-  let render,h,Text,Fragment, ref,getCurrentInstance, onBeforeMount, onBeforeUpdate, onMounted, onUpdated,provide,inject
+  let isVue = false
+  let render,h,Text,Fragment, ref,getCurrentInstance, onBeforeMount, onBeforeUpdate, onMounted, onUpdated,provide,inject,Teleport
   function changeAPI(vueOrCustom) {
     if (vueOrCustom === 'vue') {
+      isVue = true
       render = renderVue;
       h = hVue
       Text = TextVue
@@ -95,7 +101,9 @@
       onUpdated = onUpdatedVue
       provide = provideVue
       inject = injectVue
+      Teleport = TeleportVue
     } else {
+      isVue = false
       render = renderCustom
       h = hCustom
       Text = TextCustom
@@ -108,6 +116,7 @@
       onUpdated = onUpdatedCustom
       provide = provideCustom
       inject = injectCustom
+      Teleport = TeleportCustom
     }
     document.getElementById('env-text').innerHTML = '当前API：' + vueOrCustom
   }
@@ -154,6 +163,13 @@
       desc: '建议尽可能将任何对响应式状态的变更都保持在供给方组件中。 有的时候，我们可能需要在注入方组件中更改数据。在这种情况下，我们推荐在供给方组件内声明并提供一个更改数据的方法函数',
       makeInit: () => h(ProvideComp),
       makeNext: () => h('ul','组件成功卸载'),
+    },
+    {
+      id: 'Teleport',
+      title: 'Teleport',
+      desc: '建议尽可能将任何对响应式状态的变更都保持在供给方组件中。 有的时候，我们可能需要在注入方组件中更改数据。在这种情况下，我们推荐在供给方组件内声明并提供一个更改数据的方法函数',
+      makeInit: () => h(Teleport, { to: isVue ? '#teleport-vue' : '#teleport-custom' }, [h('span', 'teleport'), h('span', '-渲染到此处')]),
+      makeNext: () => h(Teleport, { to: isVue ? '#teleport-vue' : '#teleport-custom' }, '如果不是数组会报错'),
     },
   ]
 

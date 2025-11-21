@@ -1,5 +1,6 @@
 import { Fragment, Text } from './createVnode'
 import { SchedulerJob } from './scheduler'
+import { Teleport } from './Teleport'
 import { LifecycleHooks } from './enums'
 import { Ref } from '@vue/reactivity3.4'
 
@@ -83,7 +84,7 @@ export type VNodeTypes =
   | 'Static'
   | 'Comment'
   | typeof Fragment
-  | 'Teleport'
+  | typeof Teleport
   | 'TeleportImpl'
   | 'Suspense'
   | 'SuspenseImpl'

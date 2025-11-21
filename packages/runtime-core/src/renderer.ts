@@ -34,6 +34,7 @@ import { isRef, ReactiveEffect, Ref } from '@vue/reactivity3.4'
 import { queueJob } from './scheduler'
 import { createComponentInstance, setupComponent } from './component'
 import { invokeArray } from './apiLifecycle'
+import { Teleport } from './Teleport'
 
 export function createRenderer(renderOptions: RendererOptions): Renderer {
   const {
@@ -241,6 +242,8 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
   const unmount = (vnode: VNode) => {
     if (vnode.type === Fragment) {
       unmountChildren(vnode.children as VNodeArrayChildren)
+    } else if (isTeleportComp(vnode.shapeFlag)) {
+      ;(vnode.type as typeof Teleport).remove(vnode, unmountChildren)
     } else if (isComponent(vnode.shapeFlag)) {
       unmount(vnode.component.subTree)
     } else {
@@ -328,8 +331,15 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
         }
         if (isTeleportComp(shapeFlag)) {
           // 对内置组件Teleport的处理
-          // processElement(lastVnode, newVnode, container, anchor, parentComponent)
-          console.log('teleport')
+
+          const teleport = type as typeof Teleport
+          teleport.process(lastVnode, newVnode, container, anchor, parentComponent, {
+            mountChildren,
+            patchChildren,
+            move(vnode: VNode, container: HostElement, anchor: HostNode) {
+              hostInsert(vnode.component ? vnode.component.subTree.el : vnode.el, container, anchor)
+            },
+          })
         }
         if (isComponent(shapeFlag)) {
           // 对组件的处理，Vue3中函数式组件已经废弃了，没有性能节约
