@@ -70,6 +70,7 @@ export interface VNode {
   component: ComponentInternalInstance | null // 组件实例， 和instance.vnode互为引用
   ref: VNodeRef
   target: HostElement | null // teleport target
+  transition: TransitionHooks | null
 }
 
 export type Data = Record<string, any>
@@ -171,3 +172,16 @@ export interface EmitFn {
 }
 
 export type LifecycleHook<TFn = Function> = (TFn & SchedulerJob)[] | null
+
+export interface TransitionHooks {
+  mode?: 'in-out' | 'out-in' | 'default'
+  persisted?: boolean
+  beforeEnter(el: HostElement): void
+  enter(el: HostElement): void
+  leave(el: HostNode, remove: () => void): void
+  clone?(vnode: VNode): TransitionHooks
+  // optional
+  afterLeave?(): void
+  delayLeave?(el: HostElement, earlyRemove: () => void, delayedLeave: () => void): void
+  delayedLeave?(): void
+}

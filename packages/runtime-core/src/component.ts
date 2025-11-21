@@ -1,6 +1,6 @@
 import { Component, ComponentInternalInstance, Data, InternalSlots, SetupContext, VNode } from './types'
 import { proxyRefs, reactive } from '@vue/reactivity3.4'
-import { hasOwn, isFunction, isSlotsChildren, NOOP, toHandlerKey } from '@vue/shared'
+import { hasOwn, isFunction, isObject, isSlotsChildren, NOOP, toHandlerKey } from '@vue/shared'
 import { LifecycleHooks } from './enums'
 
 export function createComponentInstance(vNode: VNode, parent: ComponentInternalInstance) {
@@ -39,11 +39,12 @@ export function createComponentInstance(vNode: VNode, parent: ComponentInternalI
 }
 
 const initSlots = (instance: ComponentInternalInstance, children: InternalSlots) => {
-  if (isSlotsChildren(instance.vnode.shapeFlag)) {
-    instance.slots = children
-  } else {
-    instance.slots = {}
+  const slots: InternalSlots = {}
+  if (isSlotsChildren(instance.vnode.shapeFlag) && isObject(children)) {
+    // 浅拷贝一份，避免后续 children / instance.slots 互相污染
+    Object.assign(slots, children)
   }
+  instance.slots = slots
 }
 
 /**

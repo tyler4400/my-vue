@@ -36,6 +36,18 @@
       height: 5px;
     }
   </style>
+  <style>
+    /* 全流程共6个类 enterfrom、active、to，leaveFrom、active、to */
+    .x-enter-active,
+    .x-leave-active {
+      transition: opacity 0.8s ease;
+    }
+
+    .x-enter-from,
+    .x-leave-to {
+      opacity: 0;
+    }
+  </style>
 </head>
 <body>
 <div id="controls" role="region" aria-label="说明">
@@ -67,6 +79,7 @@ custom: <div id="teleport-custom"></div>
     provide as provideVue,
     inject as injectVue,
     Teleport as TeleportVue,
+    Transition as TransitionVue,
   } from "../../../node_modules/vue/dist/vue.runtime.esm-browser.js";
   import {
     render as renderCustom,
@@ -82,10 +95,13 @@ custom: <div id="teleport-custom"></div>
     provide as provideCustom,
     inject as injectCustom,
     Teleport as TeleportCustom,
+    Transition as TransitionCustom,
   } from '../dist/runtime-dom.esm.js'
 
   let isVue = false
-  let render,h,Text,Fragment, ref,getCurrentInstance, onBeforeMount, onBeforeUpdate, onMounted, onUpdated,provide,inject,Teleport
+  let render,h,Text,Fragment, ref,getCurrentInstance,
+    onBeforeMount, onBeforeUpdate, onMounted, onUpdated,provide,inject,Teleport,
+  Transition
   function changeAPI(vueOrCustom) {
     if (vueOrCustom === 'vue') {
       isVue = true
@@ -102,6 +118,7 @@ custom: <div id="teleport-custom"></div>
       provide = provideVue
       inject = injectVue
       Teleport = TeleportVue
+      Transition = TransitionVue
     } else {
       isVue = false
       render = renderCustom
@@ -117,6 +134,7 @@ custom: <div id="teleport-custom"></div>
       provide = provideCustom
       inject = injectCustom
       Teleport = TeleportCustom
+      Transition = TransitionCustom
     }
     document.getElementById('env-text').innerHTML = '当前API：' + vueOrCustom
   }
@@ -154,7 +172,18 @@ custom: <div id="teleport-custom"></div>
     }
   }
 
-
+  const props = {
+    name: 'x',
+    onBeforeEnter(el) {
+      console.log(isVue, 'onBeforeEnter');
+    },
+    onEnter(el) {
+      console.log(isVue, 'onEnter');
+    },
+    onLeave(el) {
+      console.log(isVue, 'onLeave');
+    },
+  };
 
   const cases = [
     {
@@ -170,6 +199,27 @@ custom: <div id="teleport-custom"></div>
       desc: '这里如果children不是数组会报错， 自己写的没考虑全面',
       makeInit: () => h(Teleport, { to: isVue ? '#teleport-vue' : '#teleport-custom' }, [h('span', 'teleport'), h('span', '-渲染到此处')]),
       makeNext: () => h(Teleport, { to: isVue ? '#teleport-vue' : '#teleport-custom' }, '如果不是数组会报错'),
+    },
+    {
+      id: 'transition',
+      title: 'Transition',
+      desc: 'Transition组件。点击【渲染更新】查看动画',
+      makeInit: () => h(Transition, props, {
+        a: 1,
+        default: () => {
+          return h('div', {
+            style: { width: '100px', height: '100px', background: 'red' },
+          });
+        },
+      }),
+      makeNext: () => h(Transition, props, {
+        b: 2,
+        default: () => {
+          return h('p', {
+            style: { width: '100px', height: '100px', background: 'blue' },
+          });
+        },
+      })
     },
   ]
 

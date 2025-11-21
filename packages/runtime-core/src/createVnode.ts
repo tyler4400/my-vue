@@ -38,6 +38,7 @@ export function createVnode(
     component: null,
     ref: props?.ref,
     target: null,
+    transition: null,
   }
   if (children !== null) {
     // compiled element vnode - if children is passed, only possible types are

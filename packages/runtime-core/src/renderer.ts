@@ -87,10 +87,10 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
     anchor: HostNode,
     parentComponent: ComponentInternalInstance,
   ) => {
-    const { type, children, props, shapeFlag } = vnode
+    const { type, children, props, shapeFlag, transition } = vnode
     // console.log('渲染的vnode', vnode, shapeFlag)
     const el = hostCreateElement(type as string)
-    vnode.el = el // 让vnode指向真实的el // todo 之前在 mountChildren的时候 未考虑string， 如果这里的vnode是字符串， 那么这一行就会报错， string是基本变量， 没有属性
+    vnode.el = el // 让vnode指向真实的el
     if (props) {
       for (const key in props) {
         hostPatchProp(el, key, null, props[key])
@@ -109,16 +109,22 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
       mountChildren(children as VNodeArrayChildren, el, parentComponent)
     }
 
+    if (transition) {
+      transition.beforeEnter(el)
+    }
     hostInsert(el, container, anchor)
+    if (transition) {
+      transition.enter(el)
+    }
   }
 
   const renderComponent = (instance: ComponentInternalInstance): VNode => {
-    const { render, vnode, proxy, attrs } = instance
+    const { render, vnode, proxy, attrs, slots } = instance
     if (isStatefulComponent(vnode.shapeFlag)) {
       return render.call(proxy, proxy)
     } else {
       // 其实传参不应该是attr，函数组件也可以定义props // https://cn.vuejs.org/guide/extras/render-function.html#functional-components
-      return (vnode.type as FunctionalComponent)(attrs, {} as SetupContext)
+      return (vnode.type as FunctionalComponent)(attrs, { slots } as SetupContext)
     }
   }
 
@@ -128,11 +134,23 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
     updateProps(instance, instance.props, next.props ?? {})
 
     // 组件更新的时候 需要更新插槽
-    // 同步 slots：children 为对象即视为 slots，否则置空
-    if (isObject(next.children) && isSlotsChildren(next.shapeFlag)) {
-      instance.slots = next.children as InternalSlots
+    const nextSlots = isObject(next.children) && isSlotsChildren(next.shapeFlag) ? (next.children as InternalSlots) : {}
+    const currentSlots = instance.slots
+
+    if (nextSlots) {
+      // 清空旧 key
+      Object.keys(currentSlots).forEach(key => {
+        delete currentSlots[key]
+      })
+      // 拷贝新 key
+      Object.keys(nextSlots).forEach(key => {
+        currentSlots[key] = nextSlots[key]
+      })
     } else {
-      instance.slots = {}
+      // 没有 slots 的情况，把对象清空即可
+      Object.keys(currentSlots).forEach(key => {
+        delete currentSlots[key]
+      })
     }
   }
 
@@ -240,14 +258,20 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
   }
 
   const unmount = (vnode: VNode) => {
-    if (vnode.type === Fragment) {
-      unmountChildren(vnode.children as VNodeArrayChildren)
-    } else if (isTeleportComp(vnode.shapeFlag)) {
-      ;(vnode.type as typeof Teleport).remove(vnode, unmountChildren)
-    } else if (isComponent(vnode.shapeFlag)) {
-      unmount(vnode.component.subTree)
+    const { shapeFlag, transition, el, type, component, children } = vnode
+
+    if (type === Fragment) {
+      unmountChildren(children as VNodeArrayChildren)
+    } else if (isTeleportComp(shapeFlag)) {
+      ;(type as typeof Teleport).remove(vnode, unmountChildren)
+    } else if (isComponent(shapeFlag)) {
+      unmount(component.subTree)
     } else {
-      hostRemove(vnode.el)
+      if (transition) {
+        transition.leave(el, () => hostRemove(el))
+      } else {
+        hostRemove(el)
+      }
     }
   }
 
