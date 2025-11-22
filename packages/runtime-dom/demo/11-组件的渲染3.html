@@ -206,7 +206,7 @@ custom: <div id="teleport-custom"></div>
     setup(props, ctx) {
       const flag = ref(true)
       return () => h(Fragment, null, [
-        h(KeepAlive, null, {
+        h(KeepAlive, { max: 2 }, {
             default: () => flag.value ? h(KeeAliveComp, {name: '天王', key: 'TW'} ): h(KeeAliveComp, {name: '地虎', key: 'DH'} )
         }),
         h('hr'),
@@ -254,7 +254,7 @@ custom: <div id="teleport-custom"></div>
     {
       id: 'keepalive',
       title: 'KeeAlive',
-      desc: 'KeepAlive组件缓存的是子组件的状态，子组件的状态是存在自己身上，如果自己或自己的父级被干掉了，那么它和它记录的缓存也就没了。',
+      desc: '切换组件的时候dom结构有bug。KeepAlive组件缓存的是子组件的状态，子组件的状态是存在自己身上，如果自己或自己的父级被干掉了，那么它和它记录的缓存也就没了。',
       makeInit: () => h(KeepaliveOuter),
       makeNext: () => h('ul','组件成功卸载'),
     },

@@ -19,6 +19,28 @@ export const KeepAlive: Component = {
     const instance = getCurrentInstance()
     const { move, unmount: _unmount, createElement } = instance.ctx.renderer
 
+    /**
+     * 根据 key 删除一条缓存：
+     * 1. 从 cache / keys 中移除
+     * 2. 将 vnode 上的 keepAlive 标记还原
+     * 3. 走正常的 unmount 流程，真正移除 DOM 和组件实例
+     *
+     * 注意：这里传入的是 keepAlive 的当前实例作为父组件，
+     * 因为 reset 之后不会再走 keepAlive 的失活逻辑，只会按普通组件卸载。
+     */
+    const pruneCacheEntry = (key: any) => {
+      const cached = cache.get(key)
+      if (!cached) return
+
+      cache.delete(key)
+      keys.delete(key)
+
+      // 还原 vnode 上的 keepAlive 相关标记，否则无法按正常流程卸载
+      reset(cached)
+      // 真正做卸载，递归删除子组件和 DOM
+      _unmount(cached, instance)
+    }
+
     instance.ctx.activate = (vnode, container, anchor) => {
       move(vnode, container, anchor) // 将元素拿出来
     }
@@ -42,17 +64,23 @@ export const KeepAlive: Component = {
       pendingCacheKey = key
       const cachedVNode = cache.get(key)
       if (cachedVNode) {
+        // 复用之前缓存的组件实例
         vnode.component = cachedVNode.component
         // mount的时候如果有这个标记，就不要走正常的mount流程，而是走激活流程。把家里藏（缓存）的dom拿出来
         vnode.shapeFlag |= ShapeFlags.COMPONENT_KEPT_ALIVE // 因为首次的时候没有cache，所以首次的不会走这里，正常mount
+
+        // 命中缓存：将当前 key 移到 Set 的尾部，标记为最近使用（LRU）
+        keys.delete(key)
+        keys.add(key)
       } else {
         // ⚠️注意， 这不要添加cache, cache是在所有子组件挂载完后， 在本组件的onMounted的时候在添加到cache中的。
         // 如果这这里添加cache， 那么cache的value记录的是还没有真正mount的instance.subtree
         // 这里只记录添加了几次
         keys.add(key)
         if (max && keys.size > max) {
-          // 做LRU
-          console.log('lru')
+          // 缓存数量超过 max，淘汰最久未使用的那个 key
+          const oldestKey = keys.values().next().value
+          pruneCacheEntry(oldestKey)
         }
       }
       // unmount的时候如果有这个标记， 就不要走正常的卸载流程，而是使用move，把这些内容放到家里深处
@@ -75,11 +103,3 @@ function reset(vnode: VNode) {
   }
   vnode.shapeFlag = shapeFlag
 }
-
-// function purneCacheEntry(key, unmount: (vnode: VNode) => void) {
-//   keys.delete(key)
-//   const cached = cache.get(key) // 之前缓存的结果
-//   // 还原vnode上的标识，否则无法走移除逻辑
-// 	reset(cached) // 将vnode标识去除
-// 	unmount(cached) // 真正的做删除
-// }
