@@ -80,6 +80,7 @@ custom: <div id="teleport-custom"></div>
     inject as injectVue,
     Teleport as TeleportVue,
     Transition as TransitionVue,
+    KeepAlive as KeepAliveVue,
   } from "../../../node_modules/vue/dist/vue.runtime.esm-browser.js";
   import {
     render as renderCustom,
@@ -96,12 +97,13 @@ custom: <div id="teleport-custom"></div>
     inject as injectCustom,
     Teleport as TeleportCustom,
     Transition as TransitionCustom,
+    KeepAlive as KeepAliveCustom,
   } from '../dist/runtime-dom.esm.js'
 
   let isVue = false
   let render,h,Text,Fragment, ref,getCurrentInstance,
     onBeforeMount, onBeforeUpdate, onMounted, onUpdated,provide,inject,Teleport,
-  Transition
+  Transition,KeepAlive
   function changeAPI(vueOrCustom) {
     if (vueOrCustom === 'vue') {
       isVue = true
@@ -119,6 +121,7 @@ custom: <div id="teleport-custom"></div>
       inject = injectVue
       Teleport = TeleportVue
       Transition = TransitionVue
+      KeepAlive = KeepAliveVue
     } else {
       isVue = false
       render = renderCustom
@@ -135,6 +138,7 @@ custom: <div id="teleport-custom"></div>
       inject = injectCustom
       Teleport = TeleportCustom
       Transition = TransitionCustom
+      KeepAlive = KeepAliveCustom
     }
     document.getElementById('env-text').innerHTML = '当前API：' + vueOrCustom
   }
@@ -185,6 +189,32 @@ custom: <div id="teleport-custom"></div>
     },
   };
 
+  const KeeAliveComp = {
+    props: {
+      name: String,
+    },
+    setup(props, ctx) {
+      const age = ref(18)
+      return () => h(Fragment, null, [
+        h('h3', props.name + '组件状态age: ' + age.value),
+        h('button', { onClick: () => age.value++ }, 'grow up'),
+      ])
+    }
+  }
+
+  const KeepaliveOuter = {
+    setup(props, ctx) {
+      const flag = ref(true)
+      return () => h(Fragment, null, [
+        h(KeepAlive, null, {
+            default: () => flag.value ? h(KeeAliveComp, {name: '天王', key: 'TW'} ): h(KeeAliveComp, {name: '地虎', key: 'DH'} )
+        }),
+        h('hr'),
+        h('button', { onClick: () => flag.value = !flag.value }, '切换'),
+      ])
+    }
+  }
+
   const cases = [
     {
       id: 'Provide-inject',
@@ -196,7 +226,7 @@ custom: <div id="teleport-custom"></div>
     {
       id: 'Teleport',
       title: 'Teleport',
-      desc: '这里如果children不是数组会报错， 自己写的没考虑全面',
+      desc: '点击【渲染更新】查看更新效果。这里如果children不是数组会报错， 自己写的没考虑全面',
       makeInit: () => h(Teleport, { to: isVue ? '#teleport-vue' : '#teleport-custom' }, [h('span', 'teleport'), h('span', '-渲染到此处')]),
       makeNext: () => h(Teleport, { to: isVue ? '#teleport-vue' : '#teleport-custom' }, '如果不是数组会报错'),
     },
@@ -220,6 +250,13 @@ custom: <div id="teleport-custom"></div>
           });
         },
       })
+    },
+    {
+      id: 'keepalive',
+      title: 'KeeAlive',
+      desc: 'KeepAlive组件缓存的是子组件的状态，子组件的状态是存在自己身上，如果自己或自己的父级被干掉了，那么它和它记录的缓存也就没了。',
+      makeInit: () => h(KeepaliveOuter),
+      makeNext: () => h('ul','组件成功卸载'),
     },
   ]
 

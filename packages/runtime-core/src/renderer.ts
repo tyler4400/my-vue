@@ -27,6 +27,8 @@ import {
   isString,
   isTextChildren,
   isTeleportComp,
+  isComponentKeptAlive,
+  isComponentShouldKeepAlive,
 } from '@vue/shared'
 import { createVnode, Fragment, isSameVnode, Text } from './createVnode'
 import getSequence from './seq'
@@ -35,6 +37,7 @@ import { queueJob } from './scheduler'
 import { createComponentInstance, setupComponent } from './component'
 import { invokeArray } from './apiLifecycle'
 import { Teleport } from './components/Teleport'
+import { isKeepAlive } from './components/KeepAlive'
 
 export function createRenderer(renderOptions: RendererOptions): Renderer {
   const {
@@ -70,13 +73,13 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
     }
   }
 
-  const unmountChildren = (children: VNodeArrayChildren) => {
+  const unmountChildren = (children: VNodeArrayChildren, parentComponent: ComponentInternalInstance) => {
     for (let i = 0; i < children.length; i++) {
       const child = children[i]
       if (isArray(child)) {
-        unmountChildren(child)
+        unmountChildren(child, parentComponent)
       } else {
-        unmount(child as VNode)
+        unmount(child as VNode, parentComponent)
       }
     }
   }
@@ -202,6 +205,36 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
   ) => {
     // 1. 先创建组件实例，放到虚拟节点上
     const instance = (newVnode.component = createComponentInstance(newVnode, parentComponent))
+
+    // 特殊地，如果是keepalive组件，需给组件挂载一些方法. 会在第三步setupComponent中用到
+    if (isKeepAlive(newVnode)) {
+      instance.ctx.renderer = {
+        createElement: hostCreateElement,
+        move(vNode: VNode, container: HostElement, anchor: HostNode) {
+          // hostInsert(vNode.component.subTree.el, container, anchor)
+
+          // ⚠️注意， 这里需要考虑子组件的根是否一个真实 DOM 节点
+          const subTree = vNode.component.subTree
+          if (subTree.type === Fragment) {
+            // 粗略处理：把 Fragment 的直接子节点都 move 一遍
+            const children = subTree.children as VNodeArrayChildren
+            children.forEach((child: VNode) => {
+              // 对于元素，child.el 就是 DOM
+              // 对于组件，child.component.subTree.el 是 DOM
+              const el = child.component != null ? child.component.subTree.el : child.el
+              if (el) {
+                hostInsert(el, container, anchor)
+              }
+            })
+          } else {
+            // 普通元素 / 组件根
+            hostInsert(subTree.el, container, anchor)
+          }
+        },
+        unmount,
+      }
+    }
+
     // 2. 给实例的属性赋值
     setupComponent(instance)
     // 3. 创建一个effect
@@ -257,15 +290,18 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
     return hasPropsChange(lastProps, newProps)
   }
 
-  const unmount = (vnode: VNode) => {
+  const unmount = (vnode: VNode, parentComponent: ComponentInternalInstance) => {
     const { shapeFlag, transition, el, type, component, children } = vnode
 
     if (type === Fragment) {
-      unmountChildren(children as VNodeArrayChildren)
+      unmountChildren(children as VNodeArrayChildren, parentComponent)
+    } else if (isComponentShouldKeepAlive(shapeFlag)) {
+      // 如果是应该被keepalive的组件，就走失活逻辑，而不是卸载
+      parentComponent.ctx.deactivate(vnode)
     } else if (isTeleportComp(shapeFlag)) {
       ;(type as typeof Teleport).remove(vnode, unmountChildren)
     } else if (isComponent(shapeFlag)) {
-      unmount(component.subTree)
+      unmount(component.subTree, parentComponent)
     } else {
       if (transition) {
         transition.leave(el, () => hostRemove(el))
@@ -322,7 +358,12 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
     parentComponent: ComponentInternalInstance,
   ) => {
     if (lastVnode === null) {
-      mountComponent(newVnode, container, anchor, parentComponent)
+      // 先判断是不是keepalive的组件， 是的话就不需要走挂载流程，直接激活
+      if (isComponentKeptAlive(newVnode.shapeFlag)) {
+        parentComponent.ctx.activate(newVnode, container, anchor)
+      } else {
+        mountComponent(newVnode, container, anchor, parentComponent)
+      }
     } else {
       updateComponent(lastVnode, newVnode)
     }
@@ -337,7 +378,7 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
   ) => {
     if (lastVnode === newVnode) return
     if (lastVnode && !isSameVnode(lastVnode, newVnode)) {
-      unmount(lastVnode)
+      unmount(lastVnode, parentComponent)
       lastVnode = null
     }
     const { type, shapeFlag, ref } = newVnode
@@ -467,14 +508,14 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
 
     if (isArrayChildren(lastShape)) {
       if (isTextChildren(newShape)) {
-        unmountChildren(lastChildren as VNodeArrayChildren)
+        unmountChildren(lastChildren as VNodeArrayChildren, parentComponent)
         hostSetElementText(el, newChildren as string)
       }
       if (isArrayChildren(newShape)) {
-        patchKeyedChildren(lastChildren as VNodeArrayChildren, newChildren as VNodeArrayChildren, el)
+        patchKeyedChildren(lastChildren as VNodeArrayChildren, newChildren as VNodeArrayChildren, el, parentComponent)
       }
       if (newChildren === null) {
-        unmountChildren(lastChildren as VNodeArrayChildren)
+        unmountChildren(lastChildren as VNodeArrayChildren, parentComponent)
       }
     }
     if (lastChildren === null) {
@@ -496,7 +537,12 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
    *  1. 先从头比一遍， 再从尾部diff一遍。 减少比对范围，增加复用范围。
    *  2. 再针对各种情形分别判断
    */
-  const patchKeyedChildren = (vnodeList1: VNodeArrayChildren, vnodeList2: VNodeArrayChildren, el: HostElement) => {
+  const patchKeyedChildren = (
+    vnodeList1: VNodeArrayChildren,
+    vnodeList2: VNodeArrayChildren,
+    el: HostElement,
+    parentComponent: ComponentInternalInstance,
+  ) => {
     let head = 0 // 开始比对的头索引
     let tail1 = vnodeList1.length - 1 // 第一个数组的尾部索引
     let tail2 = vnodeList2.length - 1 // 第二个数组的尾部索引
@@ -569,7 +615,7 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
     if (head > tail2) {
       if (head <= tail1) {
         while (head <= tail1) {
-          unmount(vnodeList1[head] as VNode)
+          unmount(vnodeList1[head] as VNode, parentComponent)
           head++
         }
       }
@@ -599,7 +645,7 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
         const indexInNew = keyToNewIndexMap.get(vnode?.key)
         if (indexInNew === undefined) {
           // 如果新的里面找不到则说明老的有的要删除
-          unmount(vnode)
+          unmount(vnode, parentComponent)
         } else {
           newIndexToOldMapIndex[indexInNew - s2] = i // [4, 2, 3, 0]
           patch(vnode, vnodeList2[indexInNew] as VNode, el)
@@ -640,7 +686,7 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
   const render: RootRenderFunction = (vnode, container) => {
     if (vnode == null) {
       if (container._vnode) {
-        unmount(container._vnode)
+        unmount(container._vnode, null)
       }
     } else {
       // 将虚拟节点变成真实节点进行渲染

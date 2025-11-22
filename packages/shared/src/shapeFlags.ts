@@ -39,8 +39,10 @@ export const isTeleportComp = (type: number) => ShapeFlags.TELEPORT & type
 
 export const isSUSPENSE = (type: number) => ShapeFlags.SUSPENSE & type
 
+// unmount的时候如果有这个标记， 就不要走正常的卸载流程，而是使用move，把这些内容放到家里深处
 export const isComponentShouldKeepAlive = (type: number) => ShapeFlags.COMPONENT_SHOULD_KEEP_ALIVE & type
 
+// 标记 - mount的时候如果有这个标记，就不要走正常的mount流程，而是走激活流程。把家里藏（缓存）的dom拿出来
 export const isComponentKeptAlive = (type: number) => ShapeFlags.COMPONENT_KEPT_ALIVE & type
 
 export const isComponent = (type: number) => ShapeFlags.COMPONENT & type

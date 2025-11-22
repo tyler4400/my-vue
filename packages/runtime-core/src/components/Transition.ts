@@ -78,7 +78,7 @@ export function Transition(props, { slots }) {
 }
 
 // 真正的组件 只需要渲染的时候调用封装后的钩子函数即可
-const BaseTransitionImpl = {
+const BaseTransitionImpl: Component = {
   props: {
     onBeforeEnter: Function,
     onEnter: Function,
@@ -105,4 +105,4 @@ const BaseTransitionImpl = {
       return vnode
     }
   },
-} as unknown as Component
+}

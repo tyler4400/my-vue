@@ -1,4 +1,12 @@
-import { Component, ComponentInternalInstance, Data, InternalSlots, SetupContext, VNode } from './types'
+import {
+  Component,
+  ComponentInternalInstance,
+  Data,
+  InternalSlots,
+  KeepAliveContext,
+  SetupContext,
+  VNode,
+} from './types'
 import { proxyRefs, reactive } from '@vue/reactivity3.4'
 import { hasOwn, isFunction, isObject, isSlotsChildren, NOOP, toHandlerKey } from '@vue/shared'
 import { LifecycleHooks } from './enums'
@@ -34,6 +42,7 @@ export function createComponentInstance(vNode: VNode, parent: ComponentInternalI
     [LifecycleHooks.SERVER_PREFETCH]: null,
     parent,
     provides: parent ? parent.provides : Object.create(null), // 初始子组件用的也是父组件的provides
+    ctx: {} as KeepAliveContext,
   }
   return instance
 }

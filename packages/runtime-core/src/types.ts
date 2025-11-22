@@ -112,10 +112,11 @@ export type VNodeChild = VNodeChildAtom | VNodeArrayChildren
 
 // 选项式组件基本构成
 export type Component = {
-  data: () => object
-  render: (proxy: State) => VNode
-  props: Record<string, any>
-  setup: (props: Data, ctx: SetupContext) => Promise<'RawBindings'> | Data | RenderFunction | void
+  data?: () => object
+  render?: (proxy: State) => VNode
+  props?: Record<string, any>
+  setup?: (props: Data, ctx: SetupContext) => Promise<'RawBindings'> | Data | RenderFunction | void
+  [key: string]: any
 }
 
 export type State = any
@@ -152,6 +153,7 @@ export interface ComponentInternalInstance {
   [LifecycleHooks.SERVER_PREFETCH]: LifecycleHook<() => Promise<unknown>>
   provides: Record<PropertyKey, any>
   parent: ComponentInternalInstance | null
+  ctx: KeepAliveContext | null // keepalive
 }
 
 export interface SetupContext {
@@ -161,7 +163,7 @@ export interface SetupContext {
   expose: (value: any) => void
 }
 
-export type Slot = (...args: any[]) => VNode[]
+export type Slot = (...args: any[]) => VNode
 
 export type InternalSlots = {
   [name: string]: Slot | undefined
@@ -184,4 +186,14 @@ export interface TransitionHooks {
   afterLeave?(): void
   delayLeave?(el: HostElement, earlyRemove: () => void, delayedLeave: () => void): void
   delayedLeave?(): void
+}
+
+export interface KeepAliveContext {
+  renderer: {
+    move: (vnode: VNode, container: HostElement, anchor: HostNode | null) => void
+    createElement: Function
+    unmount: Function
+  }
+  activate: (vnode: VNode, container: HostElement, anchor: HostNode | null) => void
+  deactivate: (vnode: VNode) => void
 }

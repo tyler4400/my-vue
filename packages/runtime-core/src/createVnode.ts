@@ -32,7 +32,7 @@ export function createVnode(
     type,
     props,
     children,
-    key: props?.key as PropertyKey,
+    key: props?.key ?? null,
     el: null,
     shapeFlag,
     component: null,
