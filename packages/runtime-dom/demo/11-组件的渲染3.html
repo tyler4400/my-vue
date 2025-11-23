@@ -81,6 +81,7 @@ custom: <div id="teleport-custom"></div>
     Teleport as TeleportVue,
     Transition as TransitionVue,
     KeepAlive as KeepAliveVue,
+    defineAsyncComponent as defineAsyncComponentVue,
   } from "../../../node_modules/vue/dist/vue.runtime.esm-browser.js";
   import {
     render as renderCustom,
@@ -98,12 +99,13 @@ custom: <div id="teleport-custom"></div>
     Teleport as TeleportCustom,
     Transition as TransitionCustom,
     KeepAlive as KeepAliveCustom,
+    defineAsyncComponent as defineAsyncComponentCustom,
   } from '../dist/runtime-dom.esm.js'
 
   let isVue = false
-  let render,h,Text,Fragment, ref,getCurrentInstance,
-    onBeforeMount, onBeforeUpdate, onMounted, onUpdated,provide,inject,Teleport,
-  Transition,KeepAlive
+  let render,h,Text,Fragment, ref, getCurrentInstance,
+    onBeforeMount, onBeforeUpdate, onMounted, onUpdated, provide, inject, Teleport,
+  Transition, KeepAlive, defineAsyncComponent
   function changeAPI(vueOrCustom) {
     if (vueOrCustom === 'vue') {
       isVue = true
@@ -122,6 +124,7 @@ custom: <div id="teleport-custom"></div>
       Teleport = TeleportVue
       Transition = TransitionVue
       KeepAlive = KeepAliveVue
+      defineAsyncComponent = defineAsyncComponentVue
     } else {
       isVue = false
       render = renderCustom
@@ -139,6 +142,7 @@ custom: <div id="teleport-custom"></div>
       Teleport = TeleportCustom
       Transition = TransitionCustom
       KeepAlive = KeepAliveCustom
+      defineAsyncComponent = defineAsyncComponentCustom
     }
     document.getElementById('env-text').innerHTML = '当前API：' + vueOrCustom
   }
@@ -215,6 +219,9 @@ custom: <div id="teleport-custom"></div>
     }
   }
 
+  const count = 2; // 加载重试次数
+  let i = 0;
+
   const cases = [
     {
       id: 'Provide-inject',
@@ -225,7 +232,7 @@ custom: <div id="teleport-custom"></div>
     },
     {
       id: 'Teleport',
-      title: 'Teleport',
+      title: 'Teleport⚠️',
       desc: '点击【渲染更新】查看更新效果。这里如果children不是数组会报错， 自己写的没考虑全面',
       makeInit: () => h(Teleport, { to: isVue ? '#teleport-vue' : '#teleport-custom' }, [h('span', 'teleport'), h('span', '-渲染到此处')]),
       makeNext: () => h(Teleport, { to: isVue ? '#teleport-vue' : '#teleport-custom' }, '如果不是数组会报错'),
@@ -253,9 +260,58 @@ custom: <div id="teleport-custom"></div>
     },
     {
       id: 'keepalive',
-      title: 'KeeAlive',
+      title: 'KeeAlive⚠️',
       desc: '切换组件的时候dom结构有bug。KeepAlive组件缓存的是子组件的状态，子组件的状态是存在自己身上，如果自己或自己的父级被干掉了，那么它和它记录的缓存也就没了。',
       makeInit: () => h(KeepaliveOuter),
+      makeNext: () => h('ul','组件成功卸载'),
+    },
+    {
+      id: 'defineAsyncComponent',
+      title: 'defineAsyncComponent',
+      desc: '异步组件。本质上就是根据内部的状态渲染不同的内容',
+      makeInit: () => h(defineAsyncComponent({
+        loader: () => {
+          return new Promise((resolve, reject) => {
+            setTimeout(() => {
+              // reject() // 测试错误情况
+              resolve({
+                render: () => {
+                  return h('div', 'Hello Async Component');
+                },
+              });
+            }, 5000);
+          });
+        },
+        timeout: 3000,
+        errorComponent: {
+          render: () => {
+            return h('div', 'Error component');
+          },
+        },
+        delay: 500, // 500ms内如果组件没有加载出来，显示loading
+        loadingComponent: {
+          render: () => {
+            return h('div', 'Loading...');
+          },
+        },
+        onError(err, retry, fail, attempts) {
+          console.error(
+            'Error loading async component:',
+            err,
+            retry,
+            fail,
+            attempts
+          );
+          setTimeout(() => {
+            if (attempts <= count) {
+              retry();
+              console.log('重新加载中...');
+            } else {
+              console.error('重试次数用过啦')
+            }
+          }, 1000);
+        },
+      })),
       makeNext: () => h('ul','组件成功卸载'),
     },
   ]
