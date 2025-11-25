@@ -65,11 +65,11 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
     }
     return children
   }
-  const mountChildren: MountChildrenFn = (children, container, parentComponent) => {
+  const mountChildren: MountChildrenFn = (children, container, anchor, parentComponent) => {
     normalize(children)
     for (let i = 0; i < children.length; i++) {
       const child = children[i]
-      patch(null, child as VNode, container, null, parentComponent)
+      patch(null, child as VNode, container, anchor, parentComponent)
     }
   }
 
@@ -109,7 +109,7 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
     if (isTextChildren(shapeFlag)) {
       hostSetElementText(el, children as string)
     } else if (isArrayChildren(shapeFlag)) {
-      mountChildren(children as VNodeArrayChildren, el, parentComponent)
+      mountChildren(children as VNodeArrayChildren, el, anchor, parentComponent)
     }
 
     if (transition) {
@@ -327,12 +327,13 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
     lastVnode: VNode | null,
     newVnode: VNode,
     container: HostElement,
+    anchor: HostNode,
     parentComponent: ComponentInternalInstance,
   ) => {
     if (lastVnode === null) {
-      mountChildren(newVnode.children as VNodeArrayChildren, container, parentComponent)
+      mountChildren(newVnode.children as VNodeArrayChildren, container, anchor, parentComponent)
     } else {
-      patchChildren(lastVnode, newVnode, container, parentComponent)
+      patchChildren(lastVnode, newVnode, container, anchor, parentComponent)
     }
   }
 
@@ -346,7 +347,7 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
     if (lastVnode === null) {
       mountElement(newVnode, container, anchor, parentComponent)
     } else {
-      patchElement(lastVnode, newVnode, container, parentComponent)
+      patchElement(lastVnode, newVnode, container, anchor, parentComponent)
     }
   }
 
@@ -387,7 +388,7 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
         processText(lastVnode, newVnode, container)
         break
       case Fragment:
-        processFragment(lastVnode, newVnode, container, parentComponent)
+        processFragment(lastVnode, newVnode, container, anchor, parentComponent)
         break
       default:
         if (isElement(shapeFlag)) {
@@ -431,12 +432,14 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
    * @param lastVnode
    * @param newVnode
    * @param container 实际没用到
+   * @param anchor
    * @param parentComponent
    */
   const patchElement = (
     lastVnode: VNode,
     newVnode: VNode,
     container: HostElement,
+    anchor: HostNode,
     parentComponent: ComponentInternalInstance,
   ) => {
     // console.log('进入到当前方法的，说明新旧vnode都存在，且新旧vnode的type和key都相同: ', lastVnode, newVnode, container)
@@ -447,7 +450,7 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
     const newProps = newVnode.props || {}
 
     patchProps(oldProps, newProps, el as HostElement)
-    patchChildren(lastVnode, newVnode, el as HostElement, parentComponent)
+    patchChildren(lastVnode, newVnode, el as HostElement, anchor, parentComponent)
   }
 
   const patchProps = (oldProps: Data, newProps: Data, el: HostElement) => {
@@ -485,6 +488,7 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
     lastVnode: VNode,
     newVnode: VNode,
     el: HostElement,
+    anchor: HostNode,
     parentComponent: ComponentInternalInstance,
   ) => {
     const lastShape = lastVnode.shapeFlag
@@ -502,7 +506,7 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
       }
       if (isArrayChildren(newShape)) {
         hostSetElementText(el, '')
-        mountChildren(newChildren as VNodeArrayChildren, el, parentComponent)
+        mountChildren(newChildren as VNodeArrayChildren, el, anchor, parentComponent)
       }
     }
 
@@ -523,7 +527,7 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
         hostSetElementText(el, newChildren as string)
       }
       if (isArrayChildren(newShape)) {
-        mountChildren(newChildren as VNodeArrayChildren, el, parentComponent)
+        mountChildren(newChildren as VNodeArrayChildren, el, anchor, parentComponent)
       }
     }
   }

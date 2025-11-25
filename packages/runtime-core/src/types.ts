@@ -54,6 +54,7 @@ export type RootRenderFunction = (vnode: VNode | null, container: HostElement) =
 export type MountChildrenFn = (
   children: VNodeArrayChildren,
   container: HostElement,
+  anchor: HostNode,
   parentComponent: ComponentInternalInstance,
 ) => void
 export type RenderFunction = () => VNodeChild
