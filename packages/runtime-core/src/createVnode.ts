@@ -1,5 +1,5 @@
 import { VNode, VNodeArrayChildren, VNodeProps, VNodeTypes } from './types'
-import { isArray, isFunction, isObject, isString, ShapeFlags } from '@vue/shared'
+import { isArray, isFunction, isObject, isString, PatchFlags, ShapeFlags } from '@vue/shared'
 import { isTeleport } from './components/Teleport'
 
 export const Text = Symbol.for('v-txt')
@@ -9,6 +9,7 @@ export function createVnode(
   type: VNodeTypes,
   props: VNodeProps = null,
   children: VNodeArrayChildren | string | null = null,
+  patchFlag?: PatchFlags,
 ): VNode {
   let shapeFlag: number
   if (isString(type)) {
@@ -39,7 +40,14 @@ export function createVnode(
     ref: props?.ref,
     target: null,
     transition: null,
+    patchFlag,
+    dynamicChildren: null,
   }
+
+  if (currentBlock && patchFlag > 0) {
+    currentBlock.push(vnode)
+  }
+
   if (children !== null) {
     // compiled element vnode - if children is passed, only possible types are
     // orderItems or Array.
@@ -69,3 +77,27 @@ export function isVnode(value: any) {
 export function isSameVnode(n1: VNode, n2: VNode) {
   return n1 && n2 && n1.type === n2.type && n1.key === n2.key
 }
+
+let currentBlock = null
+export function openBlock() {
+  currentBlock = [] // 用于收集动态节点
+}
+export function closeBlock() {
+  currentBlock = null
+}
+export function setupBlock(vnode) {
+  vnode.dynamicChildren = currentBlock // 当前elementBlock会收集子节点，用当前block来收集
+  closeBlock()
+  return vnode
+}
+// block 有收集虚拟节点的功能
+export function createElementBlock(type, props, children?, patchFlag?) {
+  return setupBlock(createVnode(type, props, children, patchFlag))
+}
+export function toDisplayString(value) {
+  return isString(value) ? value : value === null ? '' : isObject(value) ? JSON.stringify(value) : String(value)
+}
+
+export { createVnode as createElementVNode }
+
+export { createVnode as createVNode }
