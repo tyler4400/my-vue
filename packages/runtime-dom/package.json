@@ -17,7 +17,7 @@
   ],
   "sideEffects": false,
   "buildOptions": {
-    "name": "runtimeCore",
+    "name": "VueRuntimeDom",
     "formats": [
       "esm-bundler",
       "esm-browser",
