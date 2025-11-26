@@ -72,6 +72,8 @@ export interface VNode {
   ref: VNodeRef
   target: HostElement | null // teleport target
   transition: TransitionHooks | null
+  patchFlag: number
+  dynamicChildren: (VNode[] & { hasOnce?: boolean }) | null
 }
 
 export type Data = Record<string, any>

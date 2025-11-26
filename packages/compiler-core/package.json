@@ -1,14 +1,14 @@
 {
-  "name": "@vue/runtime-core",
+  "name": "@vue/compiler-core",
   "version": "1.0.0",
-  "description": "仿写vue3.4的runtime-core",
-  "main": "dist/runtime-core.cjs.js",
-  "module": "dist/runtime-core.esm.js",
+  "description": "仿写vue3.4的compiler-core",
+  "main": "dist/compiler-core.cjs.js",
+  "module": "dist/compiler-core.esm.js",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/runtime-core.esm.js",
-      "require": "./dist/runtime-core.cjs.js"
+      "import": "./dist/compiler-core.esm.js",
+      "require": "./dist/compiler-core.cjs.js"
     }
   },
   "files": [
@@ -17,7 +17,7 @@
   ],
   "sideEffects": false,
   "buildOptions": {
-    "name": "VueRuntimeCore",
+    "name": "VueCompilerCore",
     "formats": [
       "esm-bundler",
       "esm-browser",
@@ -26,7 +26,6 @@
     ]
   },
   "dependencies": {
-    "@vue/reactivity3.4": "workspace:^",
     "@vue/shared": "workspace:^"
   }
 }

@@ -29,6 +29,7 @@ import {
   isTeleportComp,
   isComponentKeptAlive,
   isComponentShouldKeepAlive,
+  PatchFlags,
 } from '@vue/shared'
 import { createVnode, Fragment, isSameVnode, Text } from './createVnode'
 import getSequence from './seq'
@@ -426,6 +427,18 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
     }
   }
 
+  const patchBlockChildren = (
+    lastVnode: VNode,
+    newVnode: VNode,
+    container: HostElement,
+    anchor: HostNode,
+    parentComponent: ComponentInternalInstance,
+  ) => {
+    for (let i = 0; i < newVnode.dynamicChildren.length; i++) {
+      patch(lastVnode.dynamicChildren[i], newVnode.dynamicChildren[i], container, anchor, parentComponent)
+    }
+  }
+
   /**
    * 进入到当前方法的，说明新旧vnode都存在，且新旧vnode的type和key都相同
    * 那么就复用他们的el，更新他们的props和children
@@ -444,13 +457,41 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
   ) => {
     // console.log('进入到当前方法的，说明新旧vnode都存在，且新旧vnode的type和key都相同: ', lastVnode, newVnode, container)
     // 复用 dom元素， 也就是el。 然后对属性和child进行更新
-    const el = (newVnode.el = lastVnode.el)
+    const el = (newVnode.el = lastVnode.el) as HostElement
 
     const oldProps = lastVnode.props || {}
     const newProps = newVnode.props || {}
 
-    patchProps(oldProps, newProps, el as HostElement)
-    patchChildren(lastVnode, newVnode, el as HostElement, anchor, parentComponent)
+    // 编译优化：在比较元素的时候，处理标记为动态的
+    const { patchFlag, dynamicChildren } = newVnode
+    if (patchFlag) {
+      if (patchFlag & PatchFlags.PROPS) {
+        // 属性变化更新， 不再具体实现
+      }
+      if (patchFlag & PatchFlags.STYLE) {
+        // 样式变化更新， 不再具体实现
+      }
+      if (patchFlag & PatchFlags.TEXT) {
+        // 只要儿子是动态的：模板中是插值“{{}}”，只比较文本
+        if (lastVnode.children !== newVnode.children) {
+          return hostSetElementText(el, newVnode.children as string)
+        }
+      }
+    } else {
+      // hostPatchProp只针对一个属性进行处理，例如class、style、event、attr
+      patchProps(oldProps, newProps, el)
+    }
+
+    if (dynamicChildren) {
+      // 线性比对（只比较标记的动态节点，性能高）
+      patchBlockChildren(lastVnode, newVnode, el, anchor, parentComponent)
+    } else {
+      // 全量diff
+      patchChildren(lastVnode, newVnode, el, anchor, parentComponent)
+    }
+
+    // patchProps(oldProps, newProps, el as HostElement)
+    // patchChildren(lastVnode, newVnode, el as HostElement, anchor, parentComponent)
   }
 
   const patchProps = (oldProps: Data, newProps: Data, el: HostElement) => {
