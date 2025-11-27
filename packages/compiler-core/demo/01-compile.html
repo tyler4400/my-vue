@@ -13,15 +13,15 @@
 <script type="module">
   // 一般在工程化中使用，因为运行时，对性能有要求
   // 依赖关系：vue -> runtime-dom -> runtime-core -> reactivity
-  import {
-    compile,
-    parse,
-  } from '../../../node_modules/vue/dist/';
+  // import {
+  //   compile,
+  //   parse,
+  //   } from 'https://unpkg.com/@vue/compiler-dom@3.5.22/dist/compiler-dom.esm-browser.js';
 
-  // import { compile, parse } from './compiler-core.js';
+  import { compile, parse } from '../dist/compiler-core.esm.js';
 
-  // console.log(compile('<div a="1"></div>'));
-  // console.log(parse('<div a="1"></div>'));
+  console.log(compile('<div a="1"></div>'));
+  console.log(parse('<div a="1"></div>'));
 
   // 验证parse相关的函数，和解析文本
   console.log(parse('内容'));
