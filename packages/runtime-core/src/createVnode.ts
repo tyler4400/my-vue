@@ -42,6 +42,7 @@ export function createVnode(
     transition: null,
     patchFlag,
     dynamicChildren: null,
+    appContext: null,
   }
 
   if (currentBlock && patchFlag > 0) {
