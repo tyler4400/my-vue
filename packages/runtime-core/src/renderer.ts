@@ -39,6 +39,7 @@ import { createComponentInstance, setupComponent } from './component'
 import { invokeArray } from './apiLifecycle'
 import { Teleport } from './components/Teleport'
 import { isKeepAlive } from './components/KeepAlive'
+import { createAppAPI } from './apiCreateApp'
 
 export function createRenderer(renderOptions: RendererOptions): Renderer {
   const {
@@ -743,5 +744,6 @@ export function createRenderer(renderOptions: RendererOptions): Renderer {
 
   return {
     render,
+    createApp: createAppAPI(render),
   }
 }

@@ -47,7 +47,7 @@ export type HostElement = Element & {
 
 export interface Renderer {
   render: RootRenderFunction
-  createApp?: Function
+  createApp: Function
 }
 
 export type RootRenderFunction = (vnode: VNode | null, container: HostElement) => void
@@ -74,6 +74,8 @@ export interface VNode {
   transition: TransitionHooks | null
   patchFlag: number
   dynamicChildren: (VNode[] & { hasOnce?: boolean }) | null
+  // application root node only
+  appContext: 'AppContext' | null | any
 }
 
 export type Data = Record<string, any>
