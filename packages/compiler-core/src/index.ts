@@ -3,36 +3,39 @@
 // 2. 转换阶段：对 AST 进行优化和转换，生成codegennode
 // 3. 生成阶段：生成渲染函数
 
-import { NodeTypes } from './ast';
-import { parse } from './parser';
-import { TO_DISPLAY_STRING } from './runtime-helpers';
+import { NodeTypes } from './ast'
+import { parse } from './parser'
+import { TO_DISPLAY_STRING } from './runtime-helpers'
 
 // DOM的遍历方式: 先序、中序、后序
 // 元素 -> 文本 -> 文本处理后 -> 元素处理后。顺序像类似洋葱结构，为什么会这样因为挂载是从子层开始
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function transformElement(node, context) {
   if (NodeTypes.ELEMENT === node.type) {
-    console.log('处理元素', node);
+    console.log('处理元素', node)
 
     return function () {
-      console.log('文本处理后触发');
-    };
+      console.log('文本处理后触发')
+    }
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function transformText(node, context) {
   if (NodeTypes.ELEMENT === node.type || NodeTypes.ROOT === node.type) {
-    console.log(node, '元素中含有文本');
+    console.log(node, '元素中含有文本')
 
     return function () {
-      console.log(node, ' 文本处理后执行');
-    };
+      console.log(node, ' 文本处理后执行')
+    }
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function transformExpression(node, context) {
   if (NodeTypes.INTERPOLATION === node.type) {
     // console.log(node, '表达式');
-    node.content.content = `_ctx.${node.content.content}`;
+    node.content.content = `_ctx.${node.content.content}`
   }
 }
 
@@ -46,23 +49,23 @@ function createTransformContext(root) {
     helpers: new Map(),
     helper(name) {
       if (!this.helpers.has(name)) {
-        const count = this.helpers.size + 1;
-        this.helpers.set(name, count);
+        const count = this.helpers.size + 1
+        this.helpers.set(name, count)
       }
-      return this.helpers.get(name);
+      return this.helpers.get(name)
     },
-  };
+  }
 }
 
 function traverseNode(node, context) {
-  context.currentNode = node;
-  const transforms = context.transformNode;
+  context.currentNode = node
+  const transforms = context.transformNode
 
-  const exists = []; // 元素的函数、文本的函数、表达式的函数
+  const exists = [] // 元素的函数、文本的函数、表达式的函数
   for (let i = 0; i < transforms.length; i++) {
-    let exit = transforms[i](node, context);
+    const exit = transforms[i](node, context)
     if (exit) {
-      exists.push(exit);
+      exists.push(exit)
     }
   }
 
@@ -70,19 +73,19 @@ function traverseNode(node, context) {
     case NodeTypes.ROOT:
     case NodeTypes.ELEMENT:
       for (let i = 0; i < node.children.length; i++) {
-        context.parent = node;
-        traverseNode(node.children[i], context);
+        context.parent = node
+        traverseNode(node.children[i], context)
       }
-      break;
+      break
     case NodeTypes.INTERPOLATION:
-      context.helper(TO_DISPLAY_STRING);
-      break;
+      context.helper(TO_DISPLAY_STRING)
+      break
   }
-  context.currentNode = node; // 因为traverseNode会将node变成子节点
-  let i = exists.length;
+  context.currentNode = node // 因为traverseNode会将node变成子节点
+  let i = exists.length
   if (i > 0) {
     while (i--) {
-      exists[i]();
+      exists[i]()
     }
   }
 }
@@ -91,18 +94,18 @@ function transform(ast) {
   // 对 AST 进行优化和转换，生成 codegen node
   // babel babel-traverse
 
-  const context = createTransformContext(ast);
+  const context = createTransformContext(ast)
 
-  traverseNode(ast, context);
-  (ast as any).helpers = [...context.helpers.keys()];
+  traverseNode(ast, context)
+  ;(ast as any).helpers = [...context.helpers.keys()]
 }
 
 function compile(template) {
-  const ast = parse(template);
-  console.log('🚀 ~ file: index.ts ~ line 59 ~ compile ~ ast', ast);
+  const ast = parse(template)
+  console.log('🚀 ~ file: index.ts ~ line 59 ~ compile ~ ast', ast)
 
   // 进行代码的转化
-  transform(ast);
+  transform(ast)
 }
 
-export { compile, parse };
+export { compile, parse }
